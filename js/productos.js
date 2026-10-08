@@ -22,6 +22,10 @@ const productos = [
         precio: 59990,
         stock: 5,
         imagen: "img/Iphone16ProMax1.jpg",
+        imagenes: [
+            "img/Iphone16ProMax1.jpg",
+            "img/ImagenPrincipal1.jpg"
+        ],
         caracteristicas: [
             "Pantalla OLED de 6.9\"",
             "Chip A18 Pro",
@@ -152,12 +156,7 @@ function inicializarEventosCatalogo() {
         const boton = evento.target.closest(".btn-agregar-carrito");
         if (!boton) return;
 
-        const idProducto = boton.dataset.id;
-        const producto = productos.find(p => p.id === idProducto);
-        if (!producto) return;
-
-        agregarAlCarrito(idProducto, 1);
-        mostrarToast(`"${producto.nombre}" se agregó al carrito.`);
+        agregarYNotificar(boton.dataset.id, 1);
     });
 }
 

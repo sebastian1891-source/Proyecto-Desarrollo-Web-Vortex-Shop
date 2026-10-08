@@ -13,20 +13,43 @@ function guardarCarrito(carrito) {
 
 // Agrega un producto al carrito (o suma cantidad si ya estaba),
 // sin superar el stock disponible.
+// Devuelve qué pasó, para poder mostrar el mensaje correcto:
+//   "agregado"  -> se sumó al carrito
+//   "limite"    -> ya estaba la cantidad máxima disponible, no se agregó nada
+//   "sinStock"  -> el producto no tiene stock (o no existe)
 function agregarAlCarrito(idProducto, cantidad = 1) {
     const producto = productos.find(p => p.id === idProducto);
-    if (!producto || producto.stock === 0) return;
+    if (!producto || producto.stock === 0) return "sinStock";
 
     const carrito = obtenerCarrito();
     const item = carrito.find(i => i.id === idProducto);
 
     if (item) {
+        if (item.cantidad >= producto.stock) return "limite";
         item.cantidad = Math.min(item.cantidad + cantidad, producto.stock);
     } else {
         carrito.push({ id: idProducto, cantidad: Math.min(cantidad, producto.stock) });
     }
 
     guardarCarrito(carrito);
+    return "agregado";
+}
+
+// Agrega el producto y muestra el mensaje que corresponde según el resultado.
+// La usan el catálogo, la ficha de producto y los productos relacionados.
+function agregarYNotificar(idProducto, cantidad = 1) {
+    const producto = productos.find(p => p.id === idProducto);
+    if (!producto) return;
+
+    const resultado = agregarAlCarrito(idProducto, cantidad);
+
+    if (resultado === "agregado") {
+        mostrarToast(`"${producto.nombre}" se agregó al carrito.`);
+    } else if (resultado === "limite") {
+        mostrarToast(`Ya tenés en el carrito las ${producto.stock} unidades disponibles de "${producto.nombre}". No se pueden agregar más.`);
+    } else {
+        mostrarToast(`"${producto.nombre}" no tiene stock por el momento.`);
+    }
 }
 
 function quitarDelCarrito(idProducto) {
@@ -67,20 +90,33 @@ function crearFilaCarrito(item, producto) {
     const fila = document.createElement("div");
     fila.className = "d-flex align-items-center gap-3 py-3 border-bottom flex-wrap";
 
+    const urlProducto = `producto.html?id=${producto.id}`;
+
     fila.innerHTML = `
-        <img src="${producto.imagen}" alt="${producto.nombre}"
-             style="width:70px;height:70px;object-fit:cover;border-radius:10px;">
+        <a href="${urlProducto}" title="Ver ${producto.nombre}">
+            <img src="${producto.imagen}" alt="${producto.nombre}"
+                 style="width:70px;height:70px;object-fit:cover;border-radius:10px;">
+        </a>
 
         <div class="flex-grow-1">
             <span class="eyebrow">${producto.categoria}</span>
-            <h3 class="h6 mb-0 mt-1">${producto.nombre}</h3>
+            <h3 class="h6 mb-0 mt-1">
+                <a href="${urlProducto}" class="link-carrito">${producto.nombre}</a>
+            </h3>
+            <small class="text-secondary">Precio unitario: ${formatearPrecio(producto.precio)}</small>
         </div>
 
-        <input type="number" min="1" max="${producto.stock}" value="${item.cantidad}"
-               class="form-control form-control-sm campo-cantidad" style="width:70px;"
-               data-id="${producto.id}">
+        <div class="text-center">
+            <input type="number" min="1" max="${producto.stock}" value="${item.cantidad}"
+                   class="form-control form-control-sm campo-cantidad" style="width:70px;"
+                   data-id="${producto.id}" aria-label="Cantidad">
+            <small class="text-secondary">Máx. ${producto.stock}</small>
+        </div>
 
-        <strong style="min-width:100px;text-align:right;">${formatearPrecio(subtotal)}</strong>
+        <div style="min-width:100px;text-align:right;">
+            <small class="text-secondary d-block">Subtotal</small>
+            <strong>${formatearPrecio(subtotal)}</strong>
+        </div>
 
         <button class="btn btn-outline-danger btn-sm btn-quitar" data-id="${producto.id}">
             Quitar
@@ -131,7 +167,10 @@ function renderizarCarrito() {
     const resumenEl = document.createElement("div");
     resumenEl.className = "d-flex justify-content-between align-items-end flex-wrap gap-2 mt-4";
     resumenEl.innerHTML = `
-        <button class="btn btn-outline-secondary btn-sm" id="btnVaciarCarrito">Vaciar carrito</button>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="catalogo.html" class="btn btn-outline-primary btn-sm">← Seguir comprando</a>
+            <button class="btn btn-outline-secondary btn-sm" id="btnVaciarCarrito">Vaciar carrito</button>
+        </div>
         <div class="text-end">
             <p class="mb-1 text-secondary small">Subtotal: ${formatearPrecio(subtotal)}</p>
             <p class="mb-2 text-secondary small">

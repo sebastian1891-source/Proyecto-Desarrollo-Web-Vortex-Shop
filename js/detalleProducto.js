@@ -145,12 +145,7 @@ function renderizarRelacionados(producto) {
         const boton = evento.target.closest(".btn-agregar-carrito");
         if (!boton) return;
 
-        const idBoton = boton.dataset.id;
-        const productoBoton = productos.find(p => p.id === idBoton);
-        if (!productoBoton) return;
-
-        agregarAlCarrito(idBoton, 1);
-        mostrarToast(`"${productoBoton.nombre}" se agregó al carrito.`);
+        agregarYNotificar(boton.dataset.id, 1);
     });
 }
 
@@ -169,8 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
     contenedor.innerHTML = crearFichaProducto(producto);
 
     document.querySelector("#btnAgregarCarrito")?.addEventListener("click", () => {
-        agregarAlCarrito(producto.id, 1);
-        mostrarToast(`"${producto.nombre}" se agregó al carrito.`);
+        agregarYNotificar(producto.id, 1);
     });
 
     renderizarValoraciones(producto.id, "valoraciones-container");
