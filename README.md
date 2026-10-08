@@ -77,17 +77,6 @@ Tarjetas: fondos blancos, bordes suaves, esquinas redondeadas y sombras discreta
 Fondos: tonos claros para el contenido principal y azul oscuro para las secciones que requieren mayor contraste.
 Diseño responsive: se utilizaron las grillas y componentes de Bootstrap junto con media queries en CSS para adaptar la interfaz a teléfonos, tablets y escritorios.
 
-**Funcionalidades pendientes**
-Implementación de un catálogo dinámico de productos.
-Incorporación de búsqueda de productos.
-Implementación de filtros y ordenamiento por categoría, precio y características.
-Desarrollo de una página de detalle de producto con información ampliada, precio, stock e imágenes.
-Implementación del carrito de compras con posibilidad de agregar, eliminar y modificar cantidades de productos.
-Desarrollo del proceso de checkout y confirmación del pedido.
-Implementación de un sistema de inicio de sesión y registro de usuarios.
-Desarrollo de la sección "Mi perfil" para consultar y modificar información del usuario.
-Integración de un sistema de gestión de pedidos y consulta de su estado.
-
 **Funcionalidades incorporadas en el Sprint 2**
 - Catálogo generado dinámicamente desde JavaScript (antes escrito a mano en el HTML).
 - Buscador de productos por nombre y filtro por categoría, combinables entre sí, sin recargar la página.
@@ -96,8 +85,15 @@ Integración de un sistema de gestión de pedidos y consulta de su estado.
 - Carrito de compras: agregar, quitar y modificar cantidades, con control de stock, subtotal, total y envío simulado.
 - Carrusel de imágenes, características técnicas, productos relacionados y valoraciones/comentarios en el detalle de producto.
 
+**Correcciones posteriores a la devolución del Sprint 2**
+- Si el carrito ya tiene la cantidad máxima disponible de un producto, al intentar agregarlo de nuevo se muestra un aviso de que no se pueden agregar más unidades (antes decía que se había agregado).
+- Se quitó la opción "Producto" del menú y del footer: la ficha se abre desde "Ver producto" en el catálogo, y en ella el menú resalta "Catálogo".
+- El carrito muestra el precio unitario de cada artículo además del subtotal.
+- Desde el carrito se puede volver al producto (clic en la imagen o el nombre) y seguir comprando con el botón "Seguir comprando".
+- El iPhone 16 Pro Max tiene dos imágenes en el carrusel de su ficha.
+
 **Representación de los productos**
-Cada producto es un objeto dentro de un arreglo (`productos`), con los campos: `id`, `nombre`, `descripcion`, `categoria`, `precio`, `stock`, `imagen` y `caracteristicas`.
+Cada producto es un objeto dentro de un arreglo (`productos`), con los campos: `id`, `nombre`, `descripcion`, `categoria`, `precio`, `stock`, `imagen`, `caracteristicas` y, de forma opcional, `imagenes` (arreglo de fotos para el carrusel de la ficha).
 
 **Organización de los archivos JavaScript**
 - `js/productos.js`: arreglo de productos, catálogo dinámico, búsqueda, filtro y orden.
