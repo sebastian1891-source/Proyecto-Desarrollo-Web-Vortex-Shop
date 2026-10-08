@@ -5,18 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
         a.classList.toggle("active", a.dataset.page === p)
     );
 
-    const t = document.querySelector("#appToast"),
-        m = document.querySelector("#toastMessage");
-
-    const show = x => {
-        m.textContent = x;
-        bootstrap.Toast.getOrCreateInstance(t).show();
-    };
-
-    document.querySelector("#btnLoginPlaceholder")?.addEventListener("click", () =>
-        show("El inicio de sesión será desarrollado en el Sprint 3.")
-    );
-
     document.querySelector("#btnProjectInfo")?.addEventListener("click", () =>
         bootstrap.Modal.getOrCreateInstance(document.querySelector("#projectInfoModal")).show()
     );

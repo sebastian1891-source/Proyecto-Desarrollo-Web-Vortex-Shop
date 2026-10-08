@@ -6,11 +6,10 @@
 <div class="collapse navbar-collapse" id="mainNav"><ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" data-page="inicio" href="index.html">Inicio</a></li>
 <li class="nav-item"><a class="nav-link" data-page="catalogo" href="catalogo.html">Catálogo</a></li>
-<li class="nav-item"><a class="nav-link" data-page="producto" href="producto.html">Producto</a></li>
 <li class="nav-item"><a class="nav-link" data-page="carrito" href="carrito.html">Carrito</a></li>
-<li class="nav-item"><a class="nav-link" data-page="perfil" href="perfil.html">Mi perfil</a></li>
+<li class="nav-item d-none" data-requiere-sesion><a class="nav-link" data-page="perfil" href="perfil.html">Mi perfil</a></li>
 <li class="nav-item"><a class="nav-link" data-page="admin" href="admin.html">Administración</a></li></ul>
-<button class="btn btn-outline-light btn-sm" id="btnLoginPlaceholder">Ingresar</button></div></div></nav><main class="flex-grow-1"><div class="container py-5">
+<div class="d-flex align-items-center gap-2" id="navbar-sesion"><a class="btn btn-outline-light btn-sm" href="login.html">Ingresar</a></div></div></div></nav><main class="flex-grow-1"><div class="container py-5">
 <div class="section-heading mb-4">
 <div>
 <span class="eyebrow">Vortex Shop</span>
@@ -21,4 +20,4 @@
 </div></main><footer class="footer py-4 mt-auto"><div class="container d-flex justify-content-between flex-wrap gap-2">
 <span>© 2026 Vortex Shop · Proyecto integrador</span><span>Versión inicial para estudiantes</span></div></footer>
 <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="appToast" class="toast"><div class="toast-header"><strong class="me-auto">Vortex Shop</strong><button class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="js/base.js"></script><script src="js/productos.js"></script><script src="js/carrito.js"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="js/base.js"></script><script type="module" src="js/sesion.js"></script><script src="js/productos.js"></script><script src="js/carrito.js"></script></body></html>
