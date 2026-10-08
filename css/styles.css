@@ -625,6 +625,112 @@ body {
 }
 
 /* =========================
+   CARRITO
+========================= */
+
+.link-carrito {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.link-carrito:hover {
+    color: #0284c7;
+    text-decoration: underline;
+}
+
+/* =========================
+   AUTENTICACIÓN (login, registro, perfil)
+========================= */
+
+.auth-wrapper {
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.auth-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px;
+    box-shadow: var(--shadow-sm);
+}
+
+.auth-card h1,
+.auth-card h2 {
+    color: var(--primary);
+}
+
+.auth-card .form-control:focus {
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+}
+
+.auth-card a {
+    color: #0284c7;
+    font-weight: 600;
+}
+
+/* Saludo del navbar con sesión iniciada */
+.navbar-saludo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.navbar-saludo:hover {
+    color: var(--secondary);
+}
+
+.avatar-mini,
+.avatar-grande {
+    display: inline-grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--secondary);
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.avatar-mini {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+}
+
+.avatar-grande {
+    width: 84px;
+    height: 84px;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+/* Filas de datos en el perfil */
+.perfil-dato {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.perfil-dato:last-of-type {
+    border-bottom: none;
+}
+
+.perfil-dato span {
+    color: var(--text-secondary);
+}
+
+.perfil-dato strong {
+    color: var(--primary);
+    word-break: break-word;
+}
+
+/* =========================
    TABLET Y PANTALLAS MEDIANAS
 ========================= */
 
@@ -646,6 +752,12 @@ body {
         left: 20px;
         right: 20px;
         bottom: 20px;
+    }
+
+    /* Menú desplegado en celular/tablet: la zona de sesión va abajo de los links */
+    #navbar-sesion {
+        padding: 10px 0 6px;
+        flex-wrap: wrap;
     }
 }
 
@@ -732,6 +844,10 @@ body {
 
     .footer {
         text-align: center;
+    }
+
+    .auth-card {
+        padding: 22px;
     }
 }
 
