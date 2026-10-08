@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firestore para Vortex Shop.
+// Copiar en: Consola de Firebase > Firestore Database > Reglas > Publicar.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Cada usuario solo puede leer y escribir SU propio documento (usuarios/{uid}).
+    match /usuarios/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // Al registrarse, el rol solo puede ser "cliente"
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.rol == "cliente";
+
+      // Puede editar sus datos, pero nunca cambiarse el rol a sí mismo
+      allow update: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.rol == resource.data.rol;
+
+      allow delete: if false;
+    }
+  }
+}
