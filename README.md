@@ -100,15 +100,44 @@ Cada producto es un objeto dentro de un arreglo (`productos`), con los campos: `
 - `js/carrito.js`: lógica del carrito de compras.
 - `js/detalleProducto.js`: ficha dinámica de producto y productos relacionados.
 - `js/valoraciones.js`: valoraciones y comentarios.
-- `js/base.js`: sin cambios respecto al Sprint 1.
+- `js/base.js`: marca la página activa en el menú y abre el modal del inicio (en el Sprint 3 se quitó el aviso simulado de "Ingresar").
 
 **Información guardada en LocalStorage**
 - Carrito de compras: `id` de cada producto agregado y su cantidad.
 - Valoraciones: estrellas (1 a 5) y comentario de cada producto, agrupados por `id` de producto.
 
+**Sprint 3 · Firebase y autenticación de usuarios**
+
+Se reemplazó el acceso simulado ("Ingresar" mostraba un aviso) por un sistema real de cuentas con Firebase Authentication (correo y contraseña) y Cloud Firestore.
+
+Funcionalidades:
+- Registro (`registro.html`) con nombre, apellido, correo, contraseña y confirmación. Se valida cada campo antes de enviar: campos obligatorios, nombre y apellido solo con letras, formato de correo, contraseña de al menos 6 caracteres con letras y números, y que ambas contraseñas coincidan.
+- Al registrarse se crea en Firestore el documento `usuarios/{uid}` con `uid`, `nombre`, `apellido`, `email`, `rol` ("cliente") y `fechaRegistro`.
+- Inicio de sesión (`login.html`) y cierre de sesión, con mensajes comprensibles en español para cada error de Firebase (correo ya registrado, credenciales incorrectas, demasiados intentos, sin conexión, etc.).
+- La sesión se mantiene al recargar o cerrar el navegador (`browserLocalPersistence`).
+- El navbar cambia según el estado: sin sesión muestra "Ingresar" y "Crear cuenta"; con sesión muestra el saludo con el nombre, la opción "Mi perfil" y "Cerrar sesión".
+- `perfil.html` está protegida: sin sesión redirige a `login.html?redirect=perfil.html` y, al ingresar, vuelve al perfil. Con sesión muestra los datos del usuario leídos desde Firestore.
+
+Organización de los archivos nuevos:
+- `js/firebase/config.js`: configuración e inicialización de Firebase; exporta `auth` y `db`.
+- `js/firebase/auth.js`: registro, inicio y cierre de sesión, observador de sesión, lectura del documento del usuario y traducción de errores.
+- `js/validaciones.js`: validaciones de los formularios y utilidades de la interfaz (marcar campos, alertas, botón con spinner).
+- `js/mensajes.js`: toast y mensajes que se muestran después de una redirección.
+- `js/sesion.js`: actualiza el navbar en todas las páginas.
+- `js/registro.js`, `js/login.js`, `js/perfil.js`: lógica de cada página.
+- `firestore.rules`: reglas de seguridad (cada usuario solo accede a su propio documento y no puede cambiarse el rol).
+
+Los archivos de Firebase se cargan como módulos (`type="module"`) desde el CDN oficial (versión 10.12.2), por lo que el sitio debe abrirse con Live Server (no funciona abriendo el HTML con doble clic).
+
+Configuración en la consola de Firebase:
+1. Crear el proyecto en https://console.firebase.google.com.
+2. Registrar una app web (ícono `</>`) y copiar el objeto `firebaseConfig` en `js/firebase/config.js`.
+3. En Authentication > Método de acceso, habilitar "Correo electrónico/contraseña".
+4. Crear la base de datos en Firestore Database y publicar las reglas de `firestore.rules`.
+5. En Authentication > Configuración > Dominios autorizados, agregar el dominio de GitHub Pages.
+
 **Funcionalidades pendientes para el siguiente sprint**
 - Checkout y confirmación real del pedido.
-- Inicio de sesión y registro de usuarios.
-- Sección "Mi perfil" funcional.
+- Edición de los datos del perfil.
 - Panel administrativo funcional.
 - Gestión y consulta de estado de pedidos.
