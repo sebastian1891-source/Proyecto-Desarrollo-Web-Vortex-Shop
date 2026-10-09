@@ -1,3 +1,7 @@
+// Valoraciones y comentarios de cada producto (guardados en LocalStorage)
+
+import { mostrarAviso, escaparHtml } from "./mensajes.js";
+
 const CLAVE_VALORACIONES = "vortexValoraciones";
 
 function obtenerTodasLasValoraciones() {
@@ -46,7 +50,7 @@ function crearHtmlListaComentarios(valoraciones) {
         .map(v => `
             <div class="border-bottom py-2">
                 <div class="text-warning">${crearEstrellasTexto(v.estrellas)}</div>
-                ${v.comentario ? `<p class="mb-1">${v.comentario}</p>` : ""}
+                ${v.comentario ? `<p class="mb-1">${escaparHtml(v.comentario)}</p>` : ""}
                 <small class="text-secondary">${v.fecha}</small>
             </div>
         `)
@@ -55,7 +59,7 @@ function crearHtmlListaComentarios(valoraciones) {
 
 // Dibuja el bloque completo (promedio + lista de comentarios + formulario de estrellas)
 // dentro del contenedor indicado, y conecta los eventos del formulario.
-function renderizarValoraciones(idProducto, idContenedor) {
+export function renderizarValoraciones(idProducto, idContenedor) {
     const contenedor = document.querySelector(`#${idContenedor}`);
     if (!contenedor) return;
 
@@ -113,14 +117,14 @@ function renderizarValoraciones(idProducto, idContenedor) {
 
     contenedor.querySelector("#btnEnviarValoracion")?.addEventListener("click", () => {
         if (estrellasSeleccionadas === 0) {
-            mostrarToast("Elegí de 1 a 5 estrellas antes de enviar tu valoración.");
+            mostrarAviso("Elegí de 1 a 5 estrellas antes de enviar tu valoración.");
             return;
         }
 
         const comentario = contenedor.querySelector("#comentarioNuevo").value;
         guardarValoracion(idProducto, estrellasSeleccionadas, comentario);
 
-        mostrarToast("¡Gracias por tu valoración!");
+        mostrarAviso("¡Gracias por tu valoración!");
         renderizarValoraciones(idProducto, idContenedor);
     });
 }

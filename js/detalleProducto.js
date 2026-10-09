@@ -1,13 +1,29 @@
+// =========================================================
+// DETALLE DE PRODUCTO (producto.html?id=...)
+// ---------------------------------------------------------
+// Recupera el producto desde Firestore usando el id de la URL
+// y arma la ficha: carrusel, información, características,
+// valoraciones y productos relacionados (misma categoría).
+// =========================================================
+
+import { obtenerProductoPorId, obtenerProductosPorCategoria, sePuedeComprar, mensajeErrorProductos } from "./firebase/productos.js";
+import { formatearPrecio, obtenerEstadoStock, crearTarjetaProducto, crearHtmlCargando, crearHtmlEstado, conBotonOcupado } from "./productosUI.js";
+import { agregarYNotificar } from "./carrito.js";
+import { renderizarValoraciones } from "./valoraciones.js";
+import { escaparHtml } from "./mensajes.js";
+
+const contenedor = document.querySelector("#detalle-producto");
+const idProducto = new URLSearchParams(window.location.search).get("id");
+
 function crearCarruselHtml(producto) {
-    const imagenes = (producto.imagenes && producto.imagenes.length)
-        ? producto.imagenes
-        : [producto.imagen];
+    const imagenes = producto.imagenes.length ? producto.imagenes : [producto.imagen];
 
     const indicadores = imagenes.length > 1
         ? `<div class="carousel-indicators">
             ${imagenes.map((_, i) => `
                 <button type="button" data-bs-target="#carruselProducto" data-bs-slide-to="${i}"
-                    class="${i === 0 ? "active" : ""}" aria-current="${i === 0 ? "true" : "false"}"></button>
+                    class="${i === 0 ? "active" : ""}" aria-current="${i === 0 ? "true" : "false"}"
+                    aria-label="Imagen ${i + 1}"></button>
             `).join("")}
            </div>`
         : "";
@@ -34,7 +50,7 @@ function crearCarruselHtml(producto) {
                 <div class="carousel-inner">
                     ${imagenes.map((img, i) => `
                         <div class="carousel-item ${i === 0 ? "active" : ""}">
-                            <img src="${img}" class="d-block w-100" alt="${producto.nombre}">
+                            <img src="${escaparHtml(img)}" class="d-block w-100" alt="${escaparHtml(producto.nombre)}">
                         </div>
                     `).join("")}
                 </div>
@@ -45,31 +61,23 @@ function crearCarruselHtml(producto) {
     `;
 }
 
-// Lista de características técnicas (solo se muestra si el producto las tiene cargadas)
+// Lista de características técnicas (solo si el producto las tiene cargadas)
 function crearCaracteristicasHtml(producto) {
-    if (!producto.caracteristicas || producto.caracteristicas.length === 0) return "";
+    if (producto.caracteristicas.length === 0) return "";
 
     return `
         <div class="mt-4">
             <h3 class="h6">Características</h3>
             <ul class="mb-0">
-                ${producto.caracteristicas.map(c => `<li>${c}</li>`).join("")}
+                ${producto.caracteristicas.map(c => `<li>${escaparHtml(c)}</li>`).join("")}
             </ul>
         </div>
     `;
 }
 
-// Arma el HTML de la ficha completa: carrusel + info + espacio para
-// valoraciones y productos relacionados (esos dos se rellenan después,
-// una vez que este HTML ya está insertado en la página).
 function crearFichaProducto(producto) {
-    const hayStock = producto.stock > 0;
-    const textoStock = hayStock
-        ? `${producto.stock} unidades disponibles`
-        : "Sin stock por el momento";
-    const claseStock = hayStock ? "text-secondary" : "text-danger fw-semibold";
-
-    const hayRelacionados = productos.some(p => p.categoria === producto.categoria && p.id !== producto.id);
+    const estado = obtenerEstadoStock(producto);
+    const comprable = sePuedeComprar(producto);
 
     return `
         <div class="row g-5 align-items-start">
@@ -78,14 +86,14 @@ function crearFichaProducto(producto) {
             </div>
 
             <div class="col-lg-6">
-                <span class="eyebrow">${producto.categoria}</span>
-                <h1 class="fw-bold mt-2">${producto.nombre}</h1>
-                <p class="lead">${producto.descripcion}</p>
-                <p class="${claseStock} mb-3">${textoStock}</p>
+                <span class="eyebrow">${escaparHtml(producto.categoria)}</span>
+                <h1 class="fw-bold mt-2">${escaparHtml(producto.nombre)}</h1>
+                <p class="lead">${escaparHtml(producto.descripcion)}</p>
+                <p class="${estado.clase} mb-3">${estado.texto}</p>
                 <h2 class="fw-bold mb-3" style="color: var(--primary);">${formatearPrecio(producto.precio)}</h2>
 
-                <button class="btn btn-primary btn-lg" id="btnAgregarCarrito" ${hayStock ? "" : "disabled"}>
-                    Agregar al carrito
+                <button class="btn btn-primary btn-lg" id="btnAgregarCarrito" ${comprable ? "" : "disabled"}>
+                    ${comprable ? "Agregar al carrito" : estado.texto}
                 </button>
 
                 <div class="mt-3">
@@ -106,8 +114,7 @@ function crearFichaProducto(producto) {
             <div id="valoraciones-container"></div>
         </section>
 
-        ${hayRelacionados ? `
-        <section class="mt-5">
+        <section class="mt-5 d-none" id="seccion-relacionados">
             <div class="section-heading mb-3">
                 <div>
                     <span class="eyebrow">También te puede interesar</span>
@@ -116,57 +123,86 @@ function crearFichaProducto(producto) {
             </div>
             <div class="row g-4" id="relacionados-container"></div>
         </section>
-        ` : ""}
     `;
 }
 
-// Arma el HTML que se muestra cuando no hay un producto válido
-function crearMensajeProductoNoEncontrado() {
-    return `
-        <section class="locked-module">
-            <div class="locked-icon">🔍</div>
-            <h1>Producto no encontrado</h1>
-            <p class="lead">Elegí un producto desde el catálogo para ver su ficha completa.</p>
-            <a href="catalogo.html" class="btn btn-primary mt-3">Ir al catálogo</a>
-        </section>
-    `;
+function mostrarNoEncontrado() {
+    document.title = "Vortex Shop | Producto no encontrado";
+    contenedor.innerHTML = `<div class="row">${crearHtmlEstado({
+        icono: "🔍",
+        titulo: "Producto no encontrado",
+        texto: "El producto que buscás no existe o ya no está en el catálogo.",
+        boton: `<a href="catalogo.html" class="btn btn-primary mt-2">Ir al catálogo</a>`
+    })}</div>`;
 }
 
-// Inserta las tarjetas de productos de la misma categoría (excluyendo el actual)
-// y conecta su propio botón "Agregar" mediante delegación de eventos.
-function renderizarRelacionados(producto) {
-    const contenedorRelacionados = document.querySelector("#relacionados-container");
-    if (!contenedorRelacionados) return;
+function mostrarError(error) {
+    contenedor.innerHTML = `<div class="row">${crearHtmlEstado({
+        icono: "⚠️",
+        titulo: "No pudimos cargar el producto",
+        texto: mensajeErrorProductos(error),
+        boton: `<button class="btn btn-primary mt-2" id="btnReintentarProducto">Reintentar</button>`
+    })}</div>`;
 
-    const relacionados = productos.filter(p => p.categoria === producto.categoria && p.id !== producto.id);
-    relacionados.forEach(p => contenedorRelacionados.appendChild(crearTarjetaProducto(p)));
-
-    contenedorRelacionados.addEventListener("click", (evento) => {
-        const boton = evento.target.closest(".btn-agregar-carrito");
-        if (!boton) return;
-
-        agregarYNotificar(boton.dataset.id, 1);
-    });
+    contenedor.querySelector("#btnReintentarProducto").addEventListener("click", cargarProducto);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const contenedor = document.querySelector("#detalle-producto");
-    if (!contenedor) return;
+// Productos de la misma categoría (sin el actual). Si la consulta falla,
+// simplemente no se muestra la sección: no es información esencial.
+async function cargarRelacionados(producto) {
+    try {
+        const relacionados = (await obtenerProductosPorCategoria(producto.categoria))
+            .filter(p => p.id !== producto.id);
 
-    const idProducto = new URLSearchParams(window.location.search).get("id");
-    const producto = productos.find(p => p.id === idProducto);
+        if (relacionados.length === 0) return;
 
-    if (!producto) {
-        contenedor.innerHTML = crearMensajeProductoNoEncontrado();
+        const contenedorRelacionados = document.querySelector("#relacionados-container");
+        relacionados.forEach(p => contenedorRelacionados.appendChild(crearTarjetaProducto(p)));
+        document.querySelector("#seccion-relacionados").classList.remove("d-none");
+
+        contenedorRelacionados.addEventListener("click", evento => {
+            const boton = evento.target.closest(".btn-agregar-carrito");
+            if (boton) conBotonOcupado(boton, () => agregarYNotificar(boton.dataset.id, 1));
+        });
+    } catch (error) {
+        console.error("No se pudieron cargar los productos relacionados:", error);
+    }
+}
+
+async function cargarProducto() {
+    if (!idProducto) {
+        mostrarNoEncontrado();
         return;
     }
 
+    contenedor.innerHTML = `<div class="row">${crearHtmlCargando("Cargando producto...")}</div>`;
+
+    let producto;
+    try {
+        producto = await obtenerProductoPorId(idProducto);
+    } catch (error) {
+        console.error(error);
+        mostrarError(error);
+        return;
+    }
+
+    if (!producto) {
+        mostrarNoEncontrado();
+        return;
+    }
+
+    document.title = `Vortex Shop | ${producto.nombre}`;
     contenedor.innerHTML = crearFichaProducto(producto);
 
-    document.querySelector("#btnAgregarCarrito")?.addEventListener("click", () => {
-        agregarYNotificar(producto.id, 1);
-    });
+    const botonAgregar = document.querySelector("#btnAgregarCarrito");
+    botonAgregar.addEventListener("click", () =>
+        conBotonOcupado(botonAgregar, () => agregarYNotificar(producto.id, 1))
+    );
 
     renderizarValoraciones(producto.id, "valoraciones-container");
-    renderizarRelacionados(producto);
-});
+    cargarRelacionados(producto);
+}
+
+if (contenedor) {
+    cargarProducto();
+}
