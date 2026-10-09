@@ -5,6 +5,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // true si el usuario logueado tiene rol "admin" en su documento usuarios/{uid}
+    function esAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == "admin";
+    }
+
     // Cada usuario solo puede leer y escribir SU propio documento (usuarios/{uid}).
     match /usuarios/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
@@ -20,6 +26,13 @@ service cloud.firestore {
                     && request.resource.data.rol == resource.data.rol;
 
       allow delete: if false;
+    }
+
+    // Catálogo: cualquier visitante puede ver los productos (aunque no haya iniciado sesión).
+    // Solo un administrador puede crearlos, modificarlos o eliminarlos.
+    match /productos/{idProducto} {
+      allow read: if true;
+      allow write: if esAdmin();
     }
   }
 }
