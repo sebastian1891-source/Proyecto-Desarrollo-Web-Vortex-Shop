@@ -86,5 +86,5 @@ export function setBotonCargando(boton, cargando, textoCargando) {
 // Solo permite redirigir a páginas internas del sitio (evita redirecciones a otros dominios)
 export function obtenerDestinoSeguro(predeterminado = "index.html") {
     const destino = new URLSearchParams(window.location.search).get("redirect");
-    return destino && /^[a-z]+\.html$/.test(destino) ? destino : predeterminado;
+    return destino && /^[a-z-]+\.html$/.test(destino) ? destino : predeterminado;
 }

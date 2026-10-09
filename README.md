@@ -92,8 +92,8 @@ Diseño responsive: se utilizaron las grillas y componentes de Bootstrap junto c
 - Desde el carrito se puede volver al producto (clic en la imagen o el nombre) y seguir comprando con el botón "Seguir comprando".
 - El iPhone 16 Pro Max tiene dos imágenes en el carrusel de su ficha.
 
-**Representación de los productos**
-Cada producto es un objeto dentro de un arreglo (`productos`), con los campos: `id`, `nombre`, `descripcion`, `categoria`, `precio`, `stock`, `imagen`, `caracteristicas` y, de forma opcional, `imagenes` (arreglo de fotos para el carrusel de la ficha).
+**Representación de los productos (Sprint 2)**
+Cada producto era un objeto dentro de un arreglo (`productos`), con los campos: `id`, `nombre`, `descripcion`, `categoria`, `precio`, `stock`, `imagen`, `caracteristicas` y, de forma opcional, `imagenes` (arreglo de fotos para el carrusel de la ficha). Desde el Sprint 3 los productos están en Firestore (ver más abajo).
 
 **Organización de los archivos JavaScript**
 - `js/productos.js`: arreglo de productos, catálogo dinámico, búsqueda, filtro y orden.
@@ -135,6 +135,34 @@ Configuración en la consola de Firebase:
 3. En Authentication > Método de acceso, habilitar "Correo electrónico/contraseña".
 4. Crear la base de datos en Firestore Database y publicar las reglas de `firestore.rules`.
 5. En Authentication > Configuración > Dominios autorizados, agregar el dominio de GitHub Pages.
+
+**Sprint 3 · Productos almacenados en Cloud Firestore**
+
+Los productos se migraron del arreglo local a la colección `productos` de Cloud Firestore. El catálogo, el detalle y el carrito consultan esa colección y conservan todas las funcionalidades del Sprint 2.
+
+Estructura de cada documento de `productos` (el id del documento es el id del producto, ej: `p1`):
+- `nombre`, `descripcion`, `categoria` (texto)
+- `precio`, `stock` (número)
+- `disponible` (booleano: permite ocultar un producto de la venta sin borrarlo)
+- `imagen` (imagen principal) e `imagenes` (arreglo para el carrusel)
+- `caracteristicas` (arreglo de textos)
+
+Funcionalidades:
+- El catálogo obtiene los productos desde Firestore; la búsqueda por nombre, el filtro por categoría y el orden se aplican sobre los productos obtenidos.
+- `producto.html?id=` recupera el documento correspondiente; los productos relacionados se consultan por categoría.
+- Antes de agregar al carrito se vuelve a consultar el producto en Firestore para validar que exista, esté disponible, tenga stock y que la cantidad en el carrito no supere el stock.
+- Al abrir el carrito (y al confirmar la compra) se revisan los productos contra Firestore: se quitan los que ya no existen o no están disponibles y se ajustan las cantidades que superan el stock, avisando al usuario.
+- Mensajes para cada situación: mientras se carga, cuando no hay productos, cuando el producto no existe y cuando falla una consulta (con botón "Reintentar").
+- El arreglo local se conserva en `js/data/productosIniciales.js` solo como carga inicial: desde `carga-inicial.html` un administrador puede subirlo a Firestore. Ya no es la fuente del catálogo.
+
+Archivos nuevos o reorganizados:
+- `js/firebase/productos.js`: consultas a la colección `productos` (todos, por id, por categoría), carga en lote y mensajes de error.
+- `js/data/productosIniciales.js`: arreglo local de respaldo / carga inicial.
+- `js/productosUI.js`: tarjeta de producto, formato de precio, estado de stock y bloques de carga/vacío/error compartidos.
+- `js/productos.js` (catálogo), `js/detalleProducto.js`, `js/carrito.js` y `js/valoraciones.js` pasaron a ser módulos (`type="module"`) que importan lo que necesitan.
+- `carga-inicial.html` + `js/cargaInicial.js`: carga inicial de productos (solo administradores).
+
+Seguridad (`firestore.rules`): cualquier visitante puede leer los productos; solo un usuario con `rol: "admin"` en su documento de `usuarios` puede crearlos, modificarlos o eliminarlos. El rol de administrador se asigna manualmente desde la consola de Firebase.
 
 **Funcionalidades pendientes para el siguiente sprint**
 - Checkout y confirmación real del pedido.
