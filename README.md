@@ -164,8 +164,36 @@ Archivos nuevos o reorganizados:
 
 Seguridad (`firestore.rules`): cualquier visitante puede leer los productos; solo un usuario con `rol: "admin"` en su documento de `usuarios` puede crearlos, modificarlos o eliminarlos. El rol de administrador se asigna manualmente desde la consola de Firebase.
 
+**Sprint 3 · Compras, pedidos y valoraciones**
+
+El botón "Confirmar compra" registra pedidos reales en Firestore, asociados al usuario autenticado.
+
+Flujo de la compra (`js/carrito.js` + `js/firebase/pedidos.js`):
+1. Si no hay sesión iniciada, no se permite comprar y se ofrece iniciar sesión o crear una cuenta (el carrito se conserva).
+2. Se revisa el carrito contra Firestore; si algún producto cambió (stock, disponibilidad), se muestran los ajustes y el usuario revisa antes de confirmar.
+3. Se ejecuta una **transacción** de Firestore que vuelve a leer cada producto, valida disponibilidad y stock, calcula el total con los precios actuales, descuenta el stock (nunca por debajo de 0) y crea el pedido. Si cualquier paso falla, no se guarda nada.
+4. El carrito se vacía únicamente si la transacción terminó bien; se muestra el número de pedido y un resumen.
+
+Estructura de cada documento de `pedidos`:
+- `uid` y `cliente` (`nombre`, `email`) del usuario autenticado
+- `items`: `idProducto`, `nombre`, `precioUnitario`, `cantidad`, `subtotal`
+- `subtotal`, `envio`, `total`, `fecha` (hora del servidor) y `estado` ("pendiente")
+
+En "Mi perfil" se listan únicamente los pedidos del usuario autenticado (consulta filtrada por `uid` y protegida por las reglas).
+
+Valoraciones (`js/valoraciones.js` + `js/firebase/valoraciones.js`):
+- Se migraron de LocalStorage a la colección `valoraciones` de Firestore. Las valoraciones anteriores eran anónimas y no podían asociarse a un usuario, por lo que se descartaron.
+- Cada opinión guarda `idProducto`, `uid`, `autor` (nombre e inicial del apellido), `estrellas`, `comentario` y `fecha`.
+- Para opinar hay que iniciar sesión. Cada usuario tiene una opinión por producto (id del documento `<idProducto>_<uid>`); si vuelve a opinar, se actualiza.
+- Se valida la puntuación (entero de 1 a 5) y el contenido (comentario de 5 a 500 caracteres), tanto en la página como en las reglas de Firestore.
+
+Reglas de seguridad agregadas (`firestore.rules`):
+- Productos: un cliente autenticado solo puede **disminuir** el campo `stock` (sin valores negativos ni otros campos); el resto de las modificaciones son solo para administradores.
+- Pedidos: cada usuario solo puede leer sus pedidos y crearlos a su nombre, en estado "pendiente", con productos y total positivo. Modificarlos o borrarlos queda para el administrador.
+- Valoraciones: lectura pública; crear o editar solo la propia, con puntuación y comentario válidos.
+
 **Funcionalidades pendientes para el siguiente sprint**
-- Checkout y confirmación real del pedido.
+- Pago real (la compra registra el pedido, pero no procesa pagos).
 - Edición de los datos del perfil.
 - Panel administrativo funcional.
-- Gestión y consulta de estado de pedidos.
+- Gestión del estado de los pedidos por parte del administrador.
