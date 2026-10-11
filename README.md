@@ -106,6 +106,7 @@ Diseño responsive: se utilizaron las grillas y componentes de Bootstrap junto c
 - **Compras reales**: el botón "Confirmar compra" registra el pedido en la colección `pedidos` y descuenta el stock.
 - **Valoraciones en Firestore** (colección `valoraciones`), asociadas al usuario autenticado, con puntuación y comentario validados. Una opinión por usuario y producto (si vuelve a opinar, se edita).
 - **Estados en la interfaz**: mensajes de carga, de catálogo vacío, de producto inexistente y de error de conexión (con botón "Reintentar").
+- **Administración** (`admin.html`): protegida por rol; el link del menú solo aparece para administradores. El panel completo es una sección en desarrollo para próximas entregas.
 - **Carga inicial** (`carga-inicial.html`, solo administradores): sube a Firestore los productos del arreglo local que todavía no existen, sin modificar los ya cargados.
 
 ### Organización de los archivos JavaScript
