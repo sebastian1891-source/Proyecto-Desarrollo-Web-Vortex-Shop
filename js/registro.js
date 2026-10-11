@@ -21,11 +21,6 @@ const campos = {
 };
 const boton = document.querySelector("#btnRegistrarse");
 
-// Si ya hay una sesión abierta no tiene sentido registrarse de nuevo
-const usuarioActual = await obtenerUsuarioActual();
-if (usuarioActual) {
-    window.location.replace("perfil.html");
-}
 
 // Qué validación corresponde a cada campo
 const validadores = {
@@ -98,3 +93,11 @@ formulario.addEventListener("submit", async (evento) => {
         setBotonCargando(boton, false);
     }
 });
+
+// (Se hace al final, después de conectar el formulario, para que un clic
+// temprano no recargue la página mientras Firebase todavía está cargando.)
+// Si ya hay una sesión abierta no tiene sentido registrarse de nuevo
+const usuarioActual = await obtenerUsuarioActual();
+if (usuarioActual) {
+    window.location.replace("perfil.html");
+}

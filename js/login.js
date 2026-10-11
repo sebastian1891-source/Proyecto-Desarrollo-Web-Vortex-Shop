@@ -18,11 +18,6 @@ const boton = document.querySelector("#btnIngresar");
 // Página a la que se vuelve después de ingresar (ej: login.html?redirect=perfil.html)
 const destino = obtenerDestinoSeguro("index.html");
 
-// Si ya hay una sesión abierta, se envía directo al destino
-const usuarioActual = await obtenerUsuarioActual();
-if (usuarioActual) {
-    window.location.replace(destino === "index.html" ? "perfil.html" : destino);
-}
 
 formulario.addEventListener("submit", async (evento) => {
     evento.preventDefault();
@@ -51,3 +46,11 @@ formulario.addEventListener("submit", async (evento) => {
         setBotonCargando(boton, false);
     }
 });
+
+// (Se hace al final, después de conectar el formulario, para que un clic
+// temprano no recargue la página mientras Firebase todavía está cargando.)
+// Si ya hay una sesión abierta, se envía directo al destino
+const usuarioActual = await obtenerUsuarioActual();
+if (usuarioActual) {
+    window.location.replace(destino === "index.html" ? "perfil.html" : destino);
+}

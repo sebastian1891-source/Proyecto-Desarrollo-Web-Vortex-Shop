@@ -292,13 +292,11 @@ async function confirmarCompra(boton) {
     boton.innerHTML = `<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Procesando...`;
 
     // 2) Se revisa el carrito contra Firestore; si cambió algo, el usuario lo revisa primero
-    const enOrden = await cargarCarrito();
-    if (!enOrden) {
-        if (obtenerCarrito().length > 0) {
-            mostrarAviso("Algunos productos cambiaron. Revisá tu carrito antes de confirmar.");
-        }
-        return;
+    const estado = await cargarCarrito();
+    if (estado === "ajustado") {
+        mostrarAviso("Algunos productos cambiaron. Revisá tu carrito antes de confirmar.");
     }
+    if (estado !== "ok") return;   // si fue "error", ya se muestra el mensaje con "Reintentar"
 
     // 3) Transacción: vuelve a validar stock, calcula el total con precios actuales,
     //    descuenta el stock y registra el pedido. El carrito se vacía SOLO si todo salió bien.
@@ -321,12 +319,15 @@ async function confirmarCompra(boton) {
     }
 }
 
-// Consulta Firestore y vuelve a dibujar el carrito.
-// Devuelve true si el carrito estaba en orden (sin ajustes ni errores).
+// Consulta Firestore y vuelve a dibujar el carrito. Devuelve el resultado:
+//   "ok"       -> el carrito está en orden
+//   "ajustado" -> se quitaron productos o se corrigieron cantidades
+//   "vacio"    -> no hay productos en el carrito
+//   "error"    -> no se pudo consultar Firestore
 async function cargarCarrito() {
     if (obtenerCarrito().length === 0) {
         dibujarCarritoVacio();
-        return false;
+        return "vacio";
     }
 
     contenedor.innerHTML = `
@@ -347,12 +348,14 @@ async function cargarCarrito() {
             texto: mensajeErrorProductos(error),
             boton: `<button class="btn btn-primary mt-2" id="btnReintentarCarrito">Reintentar</button>`
         })}</div>`;
-        return false;
+        return "error";
     }
 
     const avisos = sincronizarConStock();
     dibujarCarrito(avisos);
-    return avisos.length === 0 && obtenerCarrito().length > 0;
+
+    if (obtenerCarrito().length === 0) return "vacio";
+    return avisos.length === 0 ? "ok" : "ajustado";
 }
 
 // Un solo listener sobre el contenedor (delegación de eventos),
