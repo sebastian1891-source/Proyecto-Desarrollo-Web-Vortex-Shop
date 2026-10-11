@@ -8,12 +8,12 @@
 // =========================================================
 
 import { obtenerProductoPorId, obtenerProductos, mensajeErrorProductos } from "./firebase/productos.js";
+import { crearPedido, calcularEnvio, numeroPedido, mensajeErrorPedido, ErrorCompra } from "./firebase/pedidos.js";
+import { obtenerUsuarioActual } from "./firebase/auth.js";
 import { mostrarAviso, escaparHtml } from "./mensajes.js";
 import { formatearPrecio, crearHtmlEstado } from "./productosUI.js";
 
 const CLAVE_CARRITO = "vortexCarrito";
-const COSTO_ENVIO_SIMULADO = 200;
-const UMBRAL_ENVIO_GRATIS = 20000;
 
 export function obtenerCarrito() {
     const datos = localStorage.getItem(CLAVE_CARRITO);
@@ -69,7 +69,8 @@ export async function agregarYNotificar(idProducto, cantidad = 1) {
     const cantidadActual = item ? item.cantidad : 0;
 
     if (cantidadActual >= producto.stock) {
-        mostrarAviso(`Ya tenés en el carrito las ${producto.stock} unidades disponibles de "${producto.nombre}". No se pueden agregar más.`);
+        const unidades = producto.stock === 1 ? "la única unidad disponible" : `las ${producto.stock} unidades disponibles`;
+        mostrarAviso(`Ya tenés en el carrito ${unidades} de "${producto.nombre}". No se pueden agregar más.`);
         return "limite";
     }
 
@@ -210,7 +211,7 @@ function dibujarCarrito(avisos = []) {
 
     contenedor.appendChild(listaEl);
 
-    const envio = subtotal >= UMBRAL_ENVIO_GRATIS ? 0 : COSTO_ENVIO_SIMULADO;
+    const envio = calcularEnvio(subtotal);
     const total = subtotal + envio;
 
     const resumenEl = document.createElement("div");
@@ -223,7 +224,7 @@ function dibujarCarrito(avisos = []) {
         <div class="text-end">
             <p class="mb-1 text-secondary small">Subtotal: ${formatearPrecio(subtotal)}</p>
             <p class="mb-2 text-secondary small">
-                Envío (simulado): ${envio === 0 ? "Gratis" : formatearPrecio(envio)}
+                Envío: ${envio === 0 ? "Gratis" : formatearPrecio(envio)}
             </p>
             <div class="d-flex align-items-center gap-3">
                 <h2 class="fw-bold mb-0" style="color: var(--primary);">Total: ${formatearPrecio(total)}</h2>
@@ -232,13 +233,100 @@ function dibujarCarrito(avisos = []) {
         </div>
     `;
     contenedor.appendChild(resumenEl);
+
+    // Lugar para avisos de la compra (ej: "Iniciá sesión para comprar")
+    const alertaCompra = document.createElement("div");
+    alertaCompra.id = "alertaCompra";
+    alertaCompra.className = "d-none";
+    contenedor.appendChild(alertaCompra);
 }
 
-// Consulta Firestore y vuelve a dibujar el carrito
+function mostrarAlertaCompra(html, tipo = "warning") {
+    const alerta = document.querySelector("#alertaCompra");
+    if (!alerta) return;
+    alerta.className = `alert alert-${tipo} mt-3`;
+    alerta.innerHTML = html;
+}
+
+// Pantalla de compra realizada
+function dibujarCompraExitosa(pedido) {
+    contenedor.innerHTML = `
+        <section class="locked-module">
+            <div class="locked-icon">✅</div>
+            <h1>¡Compra confirmada!</h1>
+            <p class="lead">Tu pedido <strong>${numeroPedido(pedido.id)}</strong> quedó registrado.</p>
+
+            <div class="locked-card">
+                <h2 class="h5">Resumen</h2>
+                <ul>
+                    ${pedido.items.map(item => `
+                        <li>${escaparHtml(item.nombre)} × ${item.cantidad} — ${formatearPrecio(item.subtotal)}</li>
+                    `).join("")}
+                </ul>
+                <p class="mb-1 mt-3">Envío: ${pedido.envio === 0 ? "Gratis" : formatearPrecio(pedido.envio)}</p>
+                <p class="mb-0 fw-bold" style="color: var(--primary);">Total: ${formatearPrecio(pedido.total)}</p>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-center flex-wrap mt-4">
+                <a href="perfil.html#pedidos" class="btn btn-primary">Ver mis pedidos</a>
+                <a href="catalogo.html" class="btn btn-outline-primary">Seguir comprando</a>
+            </div>
+        </section>
+    `;
+}
+
+// Flujo completo de "Confirmar compra"
+async function confirmarCompra(boton) {
+    // 1) Sin sesión no se puede comprar
+    const usuario = await obtenerUsuarioActual();
+    if (!usuario) {
+        mostrarAlertaCompra(`
+            Para confirmar la compra tenés que iniciar sesión. Tu carrito se mantiene guardado.
+            <a href="login.html?redirect=carrito.html" class="alert-link">Iniciar sesión</a> o
+            <a href="registro.html" class="alert-link">crear una cuenta</a>.
+        `);
+        return;
+    }
+
+    boton.disabled = true;
+    boton.innerHTML = `<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Procesando...`;
+
+    // 2) Se revisa el carrito contra Firestore; si cambió algo, el usuario lo revisa primero
+    const enOrden = await cargarCarrito();
+    if (!enOrden) {
+        if (obtenerCarrito().length > 0) {
+            mostrarAviso("Algunos productos cambiaron. Revisá tu carrito antes de confirmar.");
+        }
+        return;
+    }
+
+    // 3) Transacción: vuelve a validar stock, calcula el total con precios actuales,
+    //    descuenta el stock y registra el pedido. El carrito se vacía SOLO si todo salió bien.
+    try {
+        const pedido = await crearPedido(usuario, obtenerCarrito());
+        vaciarCarrito();
+        dibujarCompraExitosa(pedido);
+        mostrarAviso(`¡Gracias por tu compra! Pedido ${numeroPedido(pedido.id)} registrado.`);
+    } catch (error) {
+        console.error(error);
+        mostrarAviso(mensajeErrorPedido(error));
+
+        // Si el problema fue de stock, se recarga el carrito para mostrar los datos actuales
+        if (error instanceof ErrorCompra) {
+            await cargarCarrito();
+        } else {
+            dibujarCarrito();
+        }
+        mostrarAlertaCompra(escaparHtml(mensajeErrorPedido(error)), "danger");
+    }
+}
+
+// Consulta Firestore y vuelve a dibujar el carrito.
+// Devuelve true si el carrito estaba en orden (sin ajustes ni errores).
 async function cargarCarrito() {
     if (obtenerCarrito().length === 0) {
         dibujarCarritoVacio();
-        return;
+        return false;
     }
 
     contenedor.innerHTML = `
@@ -259,10 +347,12 @@ async function cargarCarrito() {
             texto: mensajeErrorProductos(error),
             boton: `<button class="btn btn-primary mt-2" id="btnReintentarCarrito">Reintentar</button>`
         })}</div>`;
-        return;
+        return false;
     }
 
-    dibujarCarrito(sincronizarConStock());
+    const avisos = sincronizarConStock();
+    dibujarCarrito(avisos);
+    return avisos.length === 0 && obtenerCarrito().length > 0;
 }
 
 // Un solo listener sobre el contenedor (delegación de eventos),
@@ -281,7 +371,9 @@ function conectarEventosCarrito() {
         item.cantidad = Math.max(1, Math.min(pedida, producto.stock));
 
         if (pedida > producto.stock) {
-            mostrarAviso(`Solo hay ${producto.stock} unidades disponibles de "${producto.nombre}".`);
+            mostrarAviso(producto.stock === 1
+                ? `Solo queda 1 unidad disponible de "${producto.nombre}".`
+                : `Solo hay ${producto.stock} unidades disponibles de "${producto.nombre}".`);
         }
 
         guardarCarrito(carrito);
@@ -307,12 +399,9 @@ function conectarEventosCarrito() {
             return;
         }
 
-        if (evento.target.closest("#btnConfirmarCompra")) {
-            // Antes de confirmar se vuelve a validar el stock con Firestore
-            await cargarCarrito();
-            if (obtenerCarrito().length > 0) {
-                mostrarAviso("Compra simulada: esta etapa todavía no procesa pagos reales.");
-            }
+        const botonConfirmar = evento.target.closest("#btnConfirmarCompra");
+        if (botonConfirmar) {
+            await confirmarCompra(botonConfirmar);
         }
     });
 }
