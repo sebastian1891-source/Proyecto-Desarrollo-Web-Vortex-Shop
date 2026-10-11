@@ -5,34 +5,90 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function estaLogueado() {
+      return request.auth != null;
+    }
+
     // true si el usuario logueado tiene rol "admin" en su documento usuarios/{uid}
     function esAdmin() {
-      return request.auth != null
+      return estaLogueado()
         && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == "admin";
     }
 
-    // Cada usuario solo puede leer y escribir SU propio documento (usuarios/{uid}).
+    // ---------- USUARIOS ----------
+    // Cada usuario solo puede leer y escribir SU propio documento.
     match /usuarios/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read: if estaLogueado() && request.auth.uid == uid;
 
       // Al registrarse, el rol solo puede ser "cliente"
-      allow create: if request.auth != null
+      allow create: if estaLogueado()
                     && request.auth.uid == uid
                     && request.resource.data.rol == "cliente";
 
       // Puede editar sus datos, pero nunca cambiarse el rol a sí mismo
-      allow update: if request.auth != null
+      allow update: if estaLogueado()
                     && request.auth.uid == uid
                     && request.resource.data.rol == resource.data.rol;
 
       allow delete: if false;
     }
 
-    // Catálogo: cualquier visitante puede ver los productos (aunque no haya iniciado sesión).
-    // Solo un administrador puede crearlos, modificarlos o eliminarlos.
+    // ---------- PRODUCTOS ----------
+    // Cualquier visitante puede ver el catálogo.
     match /productos/{idProducto} {
       allow read: if true;
-      allow write: if esAdmin();
+      allow create, delete: if esAdmin();
+
+      // El admin puede editar todo. Un cliente logueado (al comprar) solo puede
+      // BAJAR el stock: no puede tocar otros campos, subirlo ni dejarlo negativo.
+      allow update: if esAdmin() || (
+        estaLogueado()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["stock"])
+        && request.resource.data.stock is number
+        && request.resource.data.stock >= 0
+        && request.resource.data.stock < resource.data.stock
+      );
+    }
+
+    // ---------- PEDIDOS ----------
+    match /pedidos/{idPedido} {
+      // Cada usuario solo ve sus pedidos (el admin ve todos)
+      allow read: if estaLogueado()
+                  && (resource.data.uid == request.auth.uid || esAdmin());
+
+      // Solo se puede crear un pedido a nombre propio, en estado "pendiente",
+      // con al menos un producto, un total positivo y la fecha del servidor
+      allow create: if estaLogueado()
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.estado == "pendiente"
+                    && request.resource.data.items is list
+                    && request.resource.data.items.size() > 0
+                    && request.resource.data.total is number
+                    && request.resource.data.total > 0
+                    && request.resource.data.fecha == request.time;
+
+      // Cambiar el estado o borrar pedidos queda para el administrador
+      allow update, delete: if esAdmin();
+    }
+
+    // ---------- VALORACIONES ----------
+    // Id del documento: "<idProducto>_<uid>" (una opinión por usuario y producto)
+    match /valoraciones/{idValoracion} {
+      allow read: if true;
+
+      allow create, update: if estaLogueado()
+                            && request.resource.data.uid == request.auth.uid
+                            && idValoracion == request.resource.data.idProducto + "_" + request.auth.uid
+                            && request.resource.data.estrellas is int
+                            && request.resource.data.estrellas >= 1
+                            && request.resource.data.estrellas <= 5
+                            && request.resource.data.comentario is string
+                            && request.resource.data.comentario.size() >= 5
+                            && request.resource.data.comentario.size() <= 500
+                            && request.resource.data.fecha == request.time;
+
+      allow delete: if estaLogueado()
+                    && (resource.data.uid == request.auth.uid || esAdmin());
     }
   }
 }
