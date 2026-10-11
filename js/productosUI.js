@@ -28,7 +28,7 @@ export function crearTarjetaProducto(producto) {
     columna.innerHTML = `
         <article class="product-card h-100">
             <div class="product-image">
-                <img src="${escaparHtml(producto.imagen)}" alt="${escaparHtml(producto.nombre)}">
+                <img onerror="this.onerror=null;this.src='img/sin-imagen.svg'" src="${escaparHtml(producto.imagen)}" alt="${escaparHtml(producto.nombre)}">
             </div>
             <div class="p-3">
                 <span class="eyebrow">${escaparHtml(producto.categoria)}</span>

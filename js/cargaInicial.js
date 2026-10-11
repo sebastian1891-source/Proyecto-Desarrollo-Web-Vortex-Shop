@@ -4,7 +4,9 @@
 // Sube el arreglo local (js/data/productosIniciales.js) a la
 // colección "productos" de Firestore. Solo un usuario con
 // rol "admin" puede hacerlo (lo controlan las reglas de Firestore).
-// Si un producto ya existe con el mismo id, se sobrescribe.
+// Solo se suben los productos que TODAVÍA NO están en Firestore:
+// los que ya existen no se tocan (así no se pierde el stock
+// descontado por las compras ni los cambios hechos en la consola).
 // =========================================================
 
 import { obtenerUsuarioActual, obtenerDatosUsuario } from "./firebase/auth.js";
@@ -27,12 +29,23 @@ function mostrarSinPermiso() {
 }
 
 async function mostrarPanel() {
-    let cantidadEnFirestore = "—";
+    let idsEnFirestore;
     try {
-        cantidadEnFirestore = (await obtenerProductos()).length;
+        idsEnFirestore = new Set((await obtenerProductos()).map(p => p.id));
     } catch (error) {
         console.error(error);
+        contenedor.innerHTML = `
+            <section class="locked-module">
+                <div class="locked-icon">⚠️</div>
+                <h1>No se pudo consultar Firestore</h1>
+                <p class="lead">${escaparHtml(mensajeErrorProductos(error))}</p>
+                <button class="btn btn-primary mt-3" onclick="location.reload()">Reintentar</button>
+            </section>
+        `;
+        return;
     }
+
+    const faltantes = productosIniciales.filter(p => !idsEnFirestore.has(p.id));
 
     contenedor.innerHTML = `
         <div class="section-heading mb-4">
@@ -45,13 +58,14 @@ async function mostrarPanel() {
         <div class="auth-card">
             <p>
                 Productos en el arreglo local: <strong>${productosIniciales.length}</strong> ·
-                Productos en Firestore: <strong id="cantidadFirestore">${cantidadEnFirestore}</strong>
+                Productos en Firestore: <strong>${idsEnFirestore.size}</strong> ·
+                Para cargar: <strong>${faltantes.length}</strong>
             </p>
 
             <div class="table-responsive">
                 <table class="table align-middle mb-4">
                     <thead>
-                        <tr><th>ID</th><th>Nombre</th><th>Categoría</th><th class="text-end">Precio</th><th class="text-end">Stock</th></tr>
+                        <tr><th>ID</th><th>Nombre</th><th>Categoría</th><th class="text-end">Precio</th><th class="text-end">Stock</th><th>Estado</th></tr>
                     </thead>
                     <tbody>
                         ${productosIniciales.map(p => `
@@ -61,6 +75,9 @@ async function mostrarPanel() {
                                 <td>${escaparHtml(p.categoria)}</td>
                                 <td class="text-end">${formatearPrecio(p.precio)}</td>
                                 <td class="text-end">${p.stock}</td>
+                                <td>${idsEnFirestore.has(p.id)
+                                    ? `<span class="badge text-bg-light border">Ya cargado</span>`
+                                    : `<span class="badge text-bg-primary">Nuevo</span>`}</td>
                             </tr>
                         `).join("")}
                     </tbody>
@@ -69,9 +86,11 @@ async function mostrarPanel() {
 
             <div id="alertaFormulario" class="alert d-none" role="alert"></div>
 
-            <button class="btn btn-primary" id="btnCargarProductos">Cargar productos en Firestore</button>
+            <button class="btn btn-primary" id="btnCargarProductos" ${faltantes.length ? "" : "disabled"}>
+                ${faltantes.length ? `Cargar ${faltantes.length} productos nuevos` : "No hay productos nuevos para cargar"}
+            </button>
             <p class="text-secondary small mt-2 mb-0">
-                Si ya existen productos con el mismo ID, se reemplazan por los datos del arreglo local.
+                Los productos que ya están en Firestore no se modifican (se conserva su stock actual).
             </p>
         </div>
     `;
@@ -84,20 +103,19 @@ async function mostrarPanel() {
         boton.innerHTML = `<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando...`;
 
         try {
-            await guardarProductos(productosIniciales);
-            const cantidad = (await obtenerProductos()).length;
-            contenedor.querySelector("#cantidadFirestore").textContent = cantidad;
+            await guardarProductos(faltantes);
+            mostrarAviso(`Se cargaron ${faltantes.length} productos en Firestore.`);
+            await mostrarPanel();
 
-            alerta.className = "alert alert-success";
-            alerta.innerHTML = `Se cargaron ${productosIniciales.length} productos correctamente. <a href="catalogo.html">Ver el catálogo</a>`;
-            mostrarAviso("Productos cargados en Firestore.");
+            const alertaNueva = contenedor.querySelector("#alertaFormulario");
+            alertaNueva.className = "alert alert-success";
+            alertaNueva.innerHTML = `Se cargaron ${faltantes.length} productos correctamente. <a href="catalogo.html">Ver el catálogo</a>`;
         } catch (error) {
             console.error(error);
             alerta.className = "alert alert-danger";
             alerta.textContent = mensajeErrorProductos(error);
-        } finally {
             boton.disabled = false;
-            boton.textContent = "Cargar productos en Firestore";
+            boton.textContent = `Cargar ${faltantes.length} productos nuevos`;
         }
     });
 }

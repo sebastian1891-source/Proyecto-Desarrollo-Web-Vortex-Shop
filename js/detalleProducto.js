@@ -50,7 +50,7 @@ function crearCarruselHtml(producto) {
                 <div class="carousel-inner">
                     ${imagenes.map((img, i) => `
                         <div class="carousel-item ${i === 0 ? "active" : ""}">
-                            <img src="${escaparHtml(img)}" class="d-block w-100" alt="${escaparHtml(producto.nombre)}">
+                            <img onerror="this.onerror=null;this.src='img/sin-imagen.svg'" src="${escaparHtml(img)}" class="d-block w-100" alt="${escaparHtml(producto.nombre)}">
                         </div>
                     `).join("")}
                 </div>

@@ -105,7 +105,7 @@ function crearFilaCarrito(item, producto) {
 
     fila.innerHTML = `
         <a href="${urlProducto}" title="Ver ${escaparHtml(producto.nombre)}">
-            <img src="${escaparHtml(producto.imagen)}" alt="${escaparHtml(producto.nombre)}"
+            <img onerror="this.onerror=null;this.src='img/sin-imagen.svg'" src="${escaparHtml(producto.imagen)}" alt="${escaparHtml(producto.nombre)}"
                  style="width:70px;height:70px;object-fit:cover;border-radius:10px;">
         </a>
 
