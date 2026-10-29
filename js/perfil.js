@@ -8,7 +8,7 @@
 // =========================================================
 
 import { obtenerUsuarioActual, obtenerDatosUsuario } from "./firebase/auth.js";
-import { obtenerPedidosDelUsuario, numeroPedido } from "./firebase/pedidos.js";
+import { obtenerPedidosDelUsuario, numeroPedido, datosEstado } from "./firebase/pedidos.js";
 import { guardarMensajePendiente, escaparHtml } from "./mensajes.js";
 import { formatearPrecio } from "./productosUI.js";
 
@@ -84,15 +84,8 @@ function renderizarPerfil(usuario, datos) {
     `;
 }
 
-const ESTADOS_PEDIDO = {
-    pendiente: { texto: "Pendiente", clase: "text-bg-warning" },
-    enviado: { texto: "Enviado", clase: "text-bg-info" },
-    entregado: { texto: "Entregado", clase: "text-bg-success" },
-    cancelado: { texto: "Cancelado", clase: "text-bg-secondary" }
-};
-
 function crearTarjetaPedido(pedido) {
-    const estado = ESTADOS_PEDIDO[pedido.estado] ?? { texto: pedido.estado, clase: "text-bg-light" };
+    const estado = datosEstado(pedido.estado);
     const fecha = pedido.fecha?.toDate
         ? pedido.fecha.toDate().toLocaleString("es-UY", { dateStyle: "medium", timeStyle: "short" })
         : "—";

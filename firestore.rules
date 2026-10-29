@@ -18,7 +18,8 @@ service cloud.firestore {
     // ---------- USUARIOS ----------
     // Cada usuario solo puede leer y escribir SU propio documento.
     match /usuarios/{uid} {
-      allow read: if estaLogueado() && request.auth.uid == uid;
+      // El administrador puede ver todos (pestaña "Usuarios" del panel)
+      allow read: if estaLogueado() && (request.auth.uid == uid || esAdmin());
 
       // Al registrarse, el rol solo puede ser "cliente"
       allow create: if estaLogueado()
@@ -67,8 +68,15 @@ service cloud.firestore {
                     && request.resource.data.total > 0
                     && request.resource.data.fecha == request.time;
 
-      // Cambiar el estado o borrar pedidos queda para el administrador
-      allow update, delete: if esAdmin();
+      // Solo el administrador cambia el estado: únicamente el campo estado
+      // (y la fecha de actualización), a un valor válido, y nunca un pedido
+      // que ya estaba cancelado.
+      allow update: if esAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["estado", "fechaActualizacion"])
+                    && request.resource.data.estado in ["pendiente", "preparando", "enviado", "entregado", "cancelado"]
+                    && resource.data.estado != "cancelado";
+
+      allow delete: if esAdmin();
     }
 
     // ---------- VALORACIONES ----------

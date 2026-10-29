@@ -125,6 +125,31 @@ export async function actualizarProducto(idProducto, datos, imagenesActuales = [
     });
 }
 
+// Activa o desactiva un producto sin borrarlo. Un producto desactivado
+// sigue en el catálogo como "No disponible" y no se puede comprar.
+export async function cambiarDisponibilidad(idProducto, disponible) {
+    await updateDoc(doc(db, COLECCION_PRODUCTOS, idProducto), {
+        disponible,
+        fechaActualizacion: serverTimestamp()
+    });
+}
+
+// Elimina un producto y sus valoraciones en una sola operación.
+// Los pedidos ya realizados no se tocan: guardan su propia copia
+// del nombre y el precio de cada producto.
+export async function eliminarProducto(idProducto) {
+    const valoraciones = await getDocs(
+        query(collection(db, "valoraciones"), where("idProducto", "==", idProducto))
+    );
+
+    const lote = writeBatch(db);
+    valoraciones.docs.forEach(documento => lote.delete(documento.ref));
+    lote.delete(doc(db, COLECCION_PRODUCTOS, idProducto));
+    await lote.commit();
+
+    return valoraciones.size;
+}
+
 // Mensaje comprensible cuando falla una consulta a Firestore
 export function mensajeErrorProductos(error) {
     switch (error?.code) {

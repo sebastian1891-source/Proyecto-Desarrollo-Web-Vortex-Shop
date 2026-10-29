@@ -22,6 +22,8 @@ import {
     doc,
     setDoc,
     getDoc,
+    getDocs,
+    collection,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -78,6 +80,13 @@ export async function obtenerUsuarioActual() {
 export async function obtenerDatosUsuario(uid) {
     const snapshot = await getDoc(doc(db, COLECCION_USUARIOS, uid));
     return snapshot.exists() ? snapshot.data() : null;
+}
+
+// Todos los documentos de usuarios (solo para el panel: las reglas
+// permiten leer la colección completa únicamente a administradores)
+export async function obtenerTodosLosUsuarios() {
+    const snapshot = await getDocs(collection(db, COLECCION_USUARIOS));
+    return snapshot.docs.map(documento => ({ id: documento.id, ...documento.data() }));
 }
 
 // Convierte los códigos de error de Firebase en mensajes comprensibles

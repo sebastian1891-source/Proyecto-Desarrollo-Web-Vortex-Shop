@@ -15,6 +15,7 @@ import {
     doc,
     getDocs,
     setDoc,
+    deleteDoc,
     query,
     where,
     serverTimestamp
@@ -71,4 +72,20 @@ export async function guardarValoracion(usuario, idProducto, estrellas, comentar
         comentario: comentario.trim(),
         fecha: serverTimestamp()
     });
+}
+
+
+// ---------- PANEL ADMINISTRATIVO ----------
+// Todas las opiniones de todos los productos, de la más nueva a la más vieja
+export async function obtenerTodasLasValoraciones() {
+    const snapshot = await getDocs(collection(db, COLECCION_VALORACIONES));
+
+    return snapshot.docs
+        .map(documento => ({ id: documento.id, ...documento.data() }))
+        .sort((a, b) => (b.fecha?.toMillis?.() ?? 0) - (a.fecha?.toMillis?.() ?? 0));
+}
+
+// Elimina una opinión (las reglas lo permiten al autor o a un administrador)
+export async function eliminarValoracion(idValoracion) {
+    await deleteDoc(doc(db, COLECCION_VALORACIONES, idValoracion));
 }

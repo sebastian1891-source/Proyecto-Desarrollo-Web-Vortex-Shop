@@ -128,7 +128,9 @@ Todos los archivos que usan Firebase son módulos (`type="module"`), por eso el 
 | `js/firebase/valoraciones.js` | Lectura, validación y guardado de opiniones |
 | `js/data/productosIniciales.js` | Arreglo local, usado solo para la carga inicial |
 | `js/productos.js` · `js/detalleProducto.js` · `js/carrito.js` | Lógica del catálogo, la ficha y el carrito |
-| `js/registro.js` · `js/login.js` · `js/perfil.js` · `js/cargaInicial.js` · `js/admin.js` | Lógica de cada página (`admin.js`: panel de productos) |
+| `js/registro.js` · `js/login.js` · `js/perfil.js` · `js/cargaInicial.js` | Lógica de cada página |
+| `js/admin.js` | Panel administrativo: protección por rol, pestañas y datos compartidos (Sprint 4) |
+| `js/admin/` | Una pestaña por archivo: `resumen.js`, `productos.js`, `pedidos.js`, `comentarios.js`, `usuarios.js`, más `confirmar.js` (ventana de confirmación) y `utilidades.js` |
 | `js/sesion.js` | Actualiza el navbar en todas las páginas |
 | `js/valoraciones.js` | Bloque de opiniones de la ficha |
 | `js/productosUI.js` · `js/validaciones.js` · `js/mensajes.js` | Piezas de interfaz, validaciones y avisos compartidos |
@@ -235,6 +237,19 @@ Las funciones `crearProducto` y `actualizarProducto` están en `js/firebase/prod
 5. Desmarcar "Disponible para la venta": en el catálogo el producto figura como *No disponible* y no se puede agregar al carrito.
 6. Ingresar como cliente y escribir `admin.html`: se redirige al inicio con el aviso de falta de permisos.
 
+### Opcionales incorporados
+Una vez terminado lo obligatorio, el panel se organizó en cinco pestañas (`admin.html#resumen`, `#productos`, `#pedidos`, `#comentarios`, `#usuarios`; la pestaña queda en la URL al recargar).
+
+| Opcional | Dónde | Qué hace |
+|---|---|---|
+| Eliminar o desactivar productos | Productos | **Desactivar/Activar** cambia `disponible` sin borrar nada: el producto sigue en el catálogo como *No disponible*. **Eliminar** pide confirmación y borra el producto junto con sus opiniones; los pedidos anteriores no cambian porque guardan su propia copia de nombre y precio. |
+| Estadísticas generales | Resumen | Productos (a la venta, sin stock, desactivados, unidades), pedidos (total y pendientes), ingresos y ticket promedio sin contar cancelados, clientes y administradores, opiniones con su promedio, productos más vendidos, pedidos por estado, alertas de stock bajo (3 o menos) y últimos pedidos. Cada tarjeta lleva a su pestaña. |
+| Consultar pedidos | Pedidos | Todos los pedidos con fecha, cliente, detalle de productos y total. Búsqueda por número, nombre o correo, y filtro por estado. |
+| Gestionar comentarios y usuarios | Comentarios · Usuarios | Moderación de opiniones (búsqueda, filtro por producto y puntuación, eliminar con confirmación). Consulta de usuarios con rol, fecha de registro, cantidad de pedidos y total comprado. Los roles se siguen asignando desde Firestore. |
+| Modificar el estado de un pedido | Pedidos | Estados: *Pendiente → En preparación → Enviado → Entregado*, o *Cancelado*. Cancelar pide confirmación, devuelve las unidades al stock en la misma transacción y es definitivo. El cliente ve el estado actualizado en "Mi perfil". |
+
+Para esto se ajustaron las reglas de Firestore: el administrador puede leer todos los usuarios, y al modificar un pedido solo puede cambiar el campo `estado` (a un valor válido y nunca desde `cancelado`).
+
 ### Semana 3 · Revisión, seguridad básica y publicación
 
 #### Reglas de Firestore
@@ -243,8 +258,8 @@ El modo de prueba se reemplazó por las reglas de `firestore.rules`, publicadas 
 | Colección | Lectura | Escritura |
 |---|---|---|
 | `productos` | Pública (cualquier visitante) | Crear, editar y borrar: solo administradores. Un cliente solo puede **bajar** el stock al confirmar una compra |
-| `pedidos` | Cada usuario solo los suyos (el administrador, todos) | Crear: solo a nombre propio y en estado `pendiente`. Modificar y borrar: solo administradores |
-| `usuarios` | Cada usuario solo su documento | Al registrarse, solo con rol `cliente`; nadie puede cambiarse el rol |
+| `pedidos` | Cada usuario solo los suyos (el administrador, todos) | Crear: solo a nombre propio y en estado `pendiente`. Cambiar el estado: solo administradores, y nunca desde `cancelado` |
+| `usuarios` | Cada usuario solo su documento (el administrador, todos) | Al registrarse, solo con rol `cliente`; nadie puede cambiarse el rol |
 | `valoraciones` | Pública | Solo el autor, con puntuación y comentario válidos |
 
 El historial de "Mi perfil" consulta los pedidos con `where("uid", "==", uid)`, así la consulta cumple la regla y un usuario nunca recibe pedidos de otra persona.
