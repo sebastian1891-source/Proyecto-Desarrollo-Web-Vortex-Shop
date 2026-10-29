@@ -18,10 +18,19 @@ import {
     getDoc,
     query,
     where,
-    writeBatch
+    writeBatch,
+    addDoc,
+    updateDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 export const COLECCION_PRODUCTOS = "productos";
+
+// Categorías que se ofrecen al crear o editar un producto en el panel
+export const CATEGORIAS = ["Accesorios", "Celulares", "Computación", "Gaming", "Periféricos"];
+
+// Imagen que se usa cuando un producto no tiene una propia
+export const IMAGEN_POR_DEFECTO = "img/sin-imagen.svg";
 
 // Convierte un documento de Firestore en un objeto producto con
 // valores por defecto, por si algún campo falta o vino mal cargado.
@@ -81,11 +90,48 @@ export async function guardarProductos(listaProductos) {
     await lote.commit();
 }
 
+// ---------- PANEL ADMINISTRATIVO (Sprint 4) ----------
+// Las reglas de Firestore solo permiten crear y editar productos
+// completos a usuarios con rol "administrador".
+
+// Crea un producto nuevo. Firestore genera el id del documento.
+// Devuelve el id creado (sirve para el link "Ver en el catálogo").
+export async function crearProducto(datos) {
+    const imagen = datos.imagen || IMAGEN_POR_DEFECTO;
+
+    const referencia = await addDoc(collection(db, COLECCION_PRODUCTOS), {
+        ...datos,
+        imagen,
+        imagenes: [imagen],
+        fechaCreacion: serverTimestamp()
+    });
+
+    return referencia.id;
+}
+
+// Guarda los cambios de un producto existente. Se usa updateDoc
+// (no setDoc) para no borrar los campos que el formulario no edita.
+// Si cambia la imagen principal, se reemplaza la primera del carrusel
+// y se conservan las demás.
+export async function actualizarProducto(idProducto, datos, imagenesActuales = []) {
+    const imagen = datos.imagen || IMAGEN_POR_DEFECTO;
+    const imagenes = [imagen, ...imagenesActuales.slice(1).filter(img => img !== imagen)];
+
+    await updateDoc(doc(db, COLECCION_PRODUCTOS, idProducto), {
+        ...datos,
+        imagen,
+        imagenes,
+        fechaActualizacion: serverTimestamp()
+    });
+}
+
 // Mensaje comprensible cuando falla una consulta a Firestore
 export function mensajeErrorProductos(error) {
     switch (error?.code) {
         case "permission-denied":
-            return "No tenés permiso para realizar esta acción.";
+            return "No tenés permiso para realizar esta acción. Verificá que tu cuenta tenga el rol administrador y que las reglas de Firestore estén publicadas.";
+        case "not-found":
+            return "El producto ya no existe en Firestore. Actualizá la lista.";
         case "unavailable":
         case "deadline-exceeded":
             return "No se pudo conectar con el servidor. Revisá tu conexión e intentá de nuevo.";

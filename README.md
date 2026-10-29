@@ -117,12 +117,12 @@ Todos los archivos que usan Firebase son módulos (`type="module"`), por eso el 
 | `js/firebase/config.js` | Inicializa Firebase y exporta `auth` y `db` |
 | `js/firebase/auth.js` | Registro, login, logout, observador de sesión y mensajes de error |
 | `js/firebase/roles.js` | Roles `cliente` / `administrador`, consulta del rol y protección de páginas de administración (Sprint 4) |
-| `js/firebase/productos.js` | Consultas a la colección `productos` |
+| `js/firebase/productos.js` | Consultas a la colección `productos`; alta y edición desde el panel (Sprint 4) |
 | `js/firebase/pedidos.js` | Transacción de compra y consulta de pedidos del usuario |
 | `js/firebase/valoraciones.js` | Lectura, validación y guardado de opiniones |
 | `js/data/productosIniciales.js` | Arreglo local, usado solo para la carga inicial |
 | `js/productos.js` · `js/detalleProducto.js` · `js/carrito.js` | Lógica del catálogo, la ficha y el carrito |
-| `js/registro.js` · `js/login.js` · `js/perfil.js` · `js/cargaInicial.js` | Lógica de cada página |
+| `js/registro.js` · `js/login.js` · `js/perfil.js` · `js/cargaInicial.js` · `js/admin.js` | Lógica de cada página (`admin.js`: panel de productos) |
 | `js/sesion.js` | Actualiza el navbar en todas las páginas |
 | `js/valoraciones.js` | Bloque de opiniones de la ficha |
 | `js/productosUI.js` · `js/validaciones.js` · `js/mensajes.js` | Piezas de interfaz, validaciones y avisos compartidos |
@@ -154,9 +154,11 @@ Cuentas creadas exclusivamente para evaluar el proyecto (no son datos personales
 
 El administrador puede acceder además a `carga-inicial.html`.
 
-## Sprint 4 · Roles y acceso administrativo
+## Sprint 4 · Roles y panel administrativo
 
-### Roles
+### Semana 1 · Roles y acceso administrativo
+
+#### Roles
 El sitio trabaja con dos roles, guardados en el campo `rol` del documento de cada usuario en Firestore:
 
 | Rol | Cómo se obtiene | Qué puede hacer |
@@ -173,7 +175,7 @@ usuarios/ uid-del-usuario/
     fechaRegistro: <fecha>
 ```
 
-### Funcionalidades incorporadas
+#### Funcionalidades incorporadas
 - **Campo `rol`** en el documento `usuarios/{uid}` de cada usuario.
 - **Registro como cliente**: todo usuario nuevo se guarda con `rol: "cliente"`. El formulario de registro no tiene ningún campo de rol, y las reglas de Firestore rechazan la creación de un usuario con otro rol aunque se intente desde la consola del navegador.
 - **Consulta del rol al iniciar sesión**: después del login se lee el rol en Firestore; el mensaje de bienvenida indica si se ingresó como administrador, y "Mi perfil" muestra el rol de la cuenta.
@@ -181,16 +183,16 @@ usuarios/ uid-del-usuario/
 - **`admin.html` protegido**: si un cliente escribe la URL directamente, se lo redirige al inicio con el aviso *"No tenés permisos para acceder al panel de administración"*. Sin sesión, se lo envía al login y, al ingresar, vuelve al panel. Mientras se verifica el permiso solo se ve "Verificando permisos...", nunca el contenido del panel. Lo mismo aplica a `carga-inicial.html`.
 - **Lógica centralizada** en `js/firebase/roles.js`: los nombres de los roles están definidos en un solo lugar (`ROLES`) y todas las páginas usan `obtenerRolUsuario`, `esAdministrador` y `exigirAdministrador`. Si un documento no tiene rol, se lo trata como cliente (nunca se dan permisos de administrador por defecto).
 
-### Asignar el rol administrador a una cuenta de prueba
+#### Asignar el rol administrador a una cuenta de prueba
 1. Crear la cuenta normalmente desde `registro.html` (queda como `cliente`).
 2. En la consola de Firebase: **Firestore Database > usuarios >** documento con el uid de esa cuenta.
 3. Editar el campo `rol` y cambiar su valor de `cliente` a `administrador`.
 4. Cerrar sesión y volver a ingresar con esa cuenta: aparece el link "Administración".
 
-### Seguridad
+#### Seguridad
 Ocultar el link y redirigir desde JavaScript mejora la experiencia, pero lo que protege los datos son las reglas de `firestore.rules`, que verifican el mismo campo `rol == "administrador"`: solo un administrador puede crear o borrar productos, ver todos los pedidos o cambiar su estado, y ningún usuario puede modificar su propio rol.
 
-### Comprobaciones con las cuentas de prueba (resultado esperado)
+#### Comprobaciones con las cuentas de prueba (resultado esperado)
 | Prueba | Cliente | Administrador |
 |---|---|---|
 | Se registra con rol `cliente` | ✔ | (se cambió a mano) |
@@ -200,8 +202,35 @@ Ocultar el link y redirigir desde JavaScript mejora la experiencia, pero lo que 
 | Mensaje al iniciar sesión | "Iniciaste sesión correctamente" | "Iniciaste sesión como administrador" |
 | Sin sesión, entra a `admin.html` | Enviado al login | Enviado al login |
 
+### Semana 2 · Panel administrativo básico
+`admin.html` pasó de ser una sección "en desarrollo" a un panel funcional enfocado en la gestión de productos. Solo pueden usarlo los administradores (misma protección de la semana 1).
+
+#### Funcionalidades incorporadas
+- **Lista de productos desde Firestore** con nombre, categoría, precio, stock y estado (*Disponible*, *Sin stock* o *No disponible*). Se ordena por categoría y nombre, tiene botón "Actualizar lista" y mensajes de carga y de error con "Reintentar".
+- **Formulario para crear un producto**: nombre, categoría, precio, stock y disponibilidad; además descripción, imagen y características (opcionales). Firestore genera el id del documento.
+- **Edición**: el botón "Editar" de cada fila carga los datos del producto en el mismo formulario, que cambia a modo edición ("Guardar cambios" / "Cancelar edición") y resalta la fila. Se guarda con `updateDoc`, por lo que no se pierden los campos que el formulario no muestra (por ejemplo, las imágenes extra del carrusel).
+- **Validaciones** antes de enviar, campo por campo y en vivo:
+  - Nombre: obligatorio, entre 3 y 100 caracteres y sin repetir el de otro producto.
+  - Categoría: obligatoria, elegida de la lista (Accesorios, Celulares, Computación, Gaming, Periféricos).
+  - Precio: obligatorio, número entero mayor a 0.
+  - Stock: obligatorio, número entero entre 0 y 9999.
+  - Opcionales: descripción de hasta 300 caracteres, imagen con ruta `img/...` o dirección `https://`, hasta 10 características.
+- **Mensajes después de guardar**: aviso de éxito con link "Ver en el catálogo", o mensaje de error comprensible (sin conexión, sin permisos, producto inexistente).
+- **Botón deshabilitado mientras se guarda**: muestra un spinner y "Guardando...", y se bloquean el formulario y los botones "Editar" para evitar envíos dobles.
+- **Reflejo en el catálogo**: después de guardar se vuelve a leer Firestore para mostrar lo realmente guardado. El catálogo, la ficha y el carrito leen la misma colección, así que el producto nuevo o editado aparece al recargarlos.
+
+Las funciones `crearProducto` y `actualizarProducto` están en `js/firebase/productos.js`; la lógica de la página, en `js/admin.js`. Las reglas de Firestore ya permitían crear y editar productos solo a administradores.
+
+#### Comprobaciones (resultado esperado)
+1. Ingresar como administrador y abrir "Administración": se ve la lista con los productos de Firestore.
+2. Enviar el formulario vacío: se marcan en rojo nombre, categoría, precio y stock, y no se guarda nada.
+3. Crear un producto válido: aparece el mensaje de éxito, el producto se suma a la lista y se ve en `catalogo.html`.
+4. Editar el precio o el stock de un producto: el cambio se ve en la lista, en el catálogo y en su ficha.
+5. Desmarcar "Disponible para la venta": en el catálogo el producto figura como *No disponible* y no se puede agregar al carrito.
+6. Ingresar como cliente y escribir `admin.html`: se redirige al inicio con el aviso de falta de permisos.
+
 **Funcionalidades pendientes para el siguiente sprint**
 - Pago real (la compra registra el pedido, pero no procesa pagos).
 - Edición de los datos del perfil.
-- Panel administrativo funcional (alta, edición y baja de productos).
+- Baja (eliminación) de productos desde el panel.
 - Gestión del estado de los pedidos por parte del administrador.

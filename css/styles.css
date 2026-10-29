@@ -936,3 +936,41 @@ body {
     }
 
 }
+/* =========================================================
+   PANEL ADMINISTRATIVO (Sprint 4)
+   ========================================================= */
+@media (min-width: 992px) {
+    .admin-form-card {
+        position: sticky;
+        top: 88px; /* debajo del navbar fijo */
+    }
+}
+
+.tabla-admin th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.tabla-admin .fila-editando > td {
+    background-color: #e0f2fe;
+}
+
+.tabla-admin .fila-guardada > td {
+    animation: fila-guardada 2s ease-out;
+}
+
+@keyframes fila-guardada {
+    from { background-color: #bbf7d0; }
+    to   { background-color: transparent; }
+}
+
+#camposFormulario[disabled] {
+    opacity: 0.7;
+}
+
+#admin-container .section-heading {
+    flex-wrap: wrap;
+}
