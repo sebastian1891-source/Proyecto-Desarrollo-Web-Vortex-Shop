@@ -1,3 +1,9 @@
+# Vortex Shop
+
+**Sitio publicado:** [https://sebastian1891-source.github.io/Proyecto-Desarrollo-Web---Vortex-Shop/](https://sebastian1891-source.github.io/Proyecto-Desarrollo-Web---Vortex-Shop/)
+
+**Repositorio:** [github.com/sebastian1891-source/Proyecto-Desarrollo-Web---Vortex-Shop](https://github.com/sebastian1891-source/Proyecto-Desarrollo-Web---Vortex-Shop)
+
 # Identidad del proyecto
 
 **Nombre del proyecto**: Vortex Shop
@@ -228,6 +234,34 @@ Las funciones `crearProducto` y `actualizarProducto` están en `js/firebase/prod
 4. Editar el precio o el stock de un producto: el cambio se ve en la lista, en el catálogo y en su ficha.
 5. Desmarcar "Disponible para la venta": en el catálogo el producto figura como *No disponible* y no se puede agregar al carrito.
 6. Ingresar como cliente y escribir `admin.html`: se redirige al inicio con el aviso de falta de permisos.
+
+### Semana 3 · Revisión, seguridad básica y publicación
+
+#### Reglas de Firestore
+El modo de prueba se reemplazó por las reglas de `firestore.rules`, publicadas en la consola de Firebase:
+
+| Colección | Lectura | Escritura |
+|---|---|---|
+| `productos` | Pública (cualquier visitante) | Crear, editar y borrar: solo administradores. Un cliente solo puede **bajar** el stock al confirmar una compra |
+| `pedidos` | Cada usuario solo los suyos (el administrador, todos) | Crear: solo a nombre propio y en estado `pendiente`. Modificar y borrar: solo administradores |
+| `usuarios` | Cada usuario solo su documento | Al registrarse, solo con rol `cliente`; nadie puede cambiarse el rol |
+| `valoraciones` | Pública | Solo el autor, con puntuación y comentario válidos |
+
+El historial de "Mi perfil" consulta los pedidos con `where("uid", "==", uid)`, así la consulta cumple la regla y un usuario nunca recibe pedidos de otra persona.
+
+#### Recorridos comprobados
+- Registro, inicio y cierre de sesión.
+- Catálogo (búsqueda, filtro y orden), detalle de producto, carrito y confirmación de compra.
+- Acceso como cliente (sin link de administración y redirigido si escribe `admin.html`) y como administrador (panel de productos).
+- Páginas principales en un teléfono (375 px): menú desplegable, tarjetas en una columna y tablas con desplazamiento horizontal.
+
+#### Correcciones de esta etapa
+- Se revisaron todos los enlaces, imágenes e imports entre archivos: no quedaron enlaces rotos.
+- Se reemplazó en el pie de página el texto de la plantilla ("Versión inicial para estudiantes") por el nombre del autor.
+- Se publicó la versión final con GitHub Pages y se agregó el enlace al comienzo de este README.
+
+#### Limitación conocida
+Como el sitio no tiene servidor propio, el descuento de stock lo hace el navegador del cliente dentro de una transacción. Las reglas impiden subir el stock, dejarlo negativo o tocar otros campos, pero no pueden comprobar que cada descuento corresponda a un pedido. Resolverlo requeriría Cloud Functions, que está fuera del alcance del curso.
 
 **Funcionalidades pendientes para el siguiente sprint**
 - Pago real (la compra registra el pedido, pero no procesa pagos).
