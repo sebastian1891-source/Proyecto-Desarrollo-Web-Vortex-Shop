@@ -3,30 +3,19 @@
 // ---------------------------------------------------------
 // Sube el arreglo local (js/data/productosIniciales.js) a la
 // colección "productos" de Firestore. Solo un usuario con
-// rol "admin" puede hacerlo (lo controlan las reglas de Firestore).
+// rol "administrador" puede hacerlo (lo controlan las reglas de Firestore).
 // Solo se suben los productos que TODAVÍA NO están en Firestore:
 // los que ya existen no se tocan (así no se pierde el stock
 // descontado por las compras ni los cambios hechos en la consola).
 // =========================================================
 
-import { obtenerUsuarioActual, obtenerDatosUsuario } from "./firebase/auth.js";
+import { exigirAdministrador } from "./firebase/roles.js";
 import { obtenerProductos, guardarProductos, mensajeErrorProductos } from "./firebase/productos.js";
 import { productosIniciales } from "./data/productosIniciales.js";
-import { guardarMensajePendiente, escaparHtml, mostrarAviso } from "./mensajes.js";
+import { escaparHtml, mostrarAviso } from "./mensajes.js";
 import { formatearPrecio } from "./productosUI.js";
 
 const contenedor = document.querySelector("#carga-container");
-
-function mostrarSinPermiso() {
-    contenedor.innerHTML = `
-        <section class="locked-module">
-            <div class="locked-icon">🛡️</div>
-            <h1>Acceso solo para administradores</h1>
-            <p class="lead">Tu cuenta no tiene el rol <strong>admin</strong>, necesario para cargar productos.</p>
-            <a href="index.html" class="btn btn-outline-primary mt-3">Volver al inicio</a>
-        </section>
-    `;
-}
 
 async function mostrarPanel() {
     let idsEnFirestore;
@@ -120,21 +109,6 @@ async function mostrarPanel() {
     });
 }
 
-const usuario = await obtenerUsuarioActual();
-
-if (!usuario) {
-    guardarMensajePendiente("Iniciá sesión con una cuenta de administrador.");
-    window.location.replace("login.html?redirect=carga-inicial.html");
-} else {
-    try {
-        const datos = await obtenerDatosUsuario(usuario.uid);
-        if (datos?.rol === "admin") {
-            await mostrarPanel();
-        } else {
-            mostrarSinPermiso();
-        }
-    } catch (error) {
-        console.error(error);
-        mostrarSinPermiso();
-    }
-}
+// Si no es administrador se lo redirige (también si escribe la URL a mano)
+const usuario = await exigirAdministrador("carga-inicial.html");
+if (usuario) await mostrarPanel();

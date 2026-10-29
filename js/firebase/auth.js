@@ -42,7 +42,7 @@ export async function registrarUsuario({ nombre, apellido, email, password }) {
         nombre,
         apellido,
         email,
-        rol: "cliente",
+        rol: "cliente", // siempre cliente: el registro no permite elegir rol (ver roles.js)
         fechaRegistro: serverTimestamp()
     });
 

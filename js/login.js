@@ -1,5 +1,6 @@
 import { iniciarSesion, obtenerUsuarioActual, traducirError } from "./firebase/auth.js";
 import { guardarMensajePendiente } from "./mensajes.js";
+import { obtenerRolUsuario, ROLES } from "./firebase/roles.js";
 import {
     validarEmail,
     validarPasswordIngreso,
@@ -33,7 +34,18 @@ formulario.addEventListener("submit", async (evento) => {
         const usuario = await iniciarSesion(inputEmail.value.trim().toLowerCase(), inputPassword.value);
 
         const nombre = usuario.displayName ? usuario.displayName.split(" ")[0] : usuario.email;
-        guardarMensajePendiente(`¡Hola, ${nombre}! Iniciaste sesión correctamente.`);
+
+        // Después de iniciar sesión se consulta el rol guardado en Firestore
+        let rol = ROLES.CLIENTE;
+        try {
+            rol = await obtenerRolUsuario(usuario.uid);
+        } catch (error) {
+            console.error(error); // si falla, se lo trata como cliente
+        }
+
+        guardarMensajePendiente(rol === ROLES.ADMINISTRADOR
+            ? `¡Hola, ${nombre}! Iniciaste sesión como administrador.`
+            : `¡Hola, ${nombre}! Iniciaste sesión correctamente.`);
 
         window.location.href = destino;
     } catch (error) {

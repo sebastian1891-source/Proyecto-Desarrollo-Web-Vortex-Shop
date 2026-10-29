@@ -7,7 +7,8 @@
 //   - Con sesión: saludo con el nombre, "Mi perfil" y "Cerrar sesión".
 // =========================================================
 
-import { observarSesion, cerrarSesion, obtenerDatosUsuario } from "./firebase/auth.js";
+import { observarSesion, cerrarSesion } from "./firebase/auth.js";
+import { esAdministrador } from "./firebase/roles.js";
 import { mostrarAviso, mostrarMensajePendiente, guardarMensajePendiente, escaparHtml } from "./mensajes.js";
 
 const contenedorSesion = document.querySelector("#navbar-sesion");
@@ -52,17 +53,15 @@ function dibujarConSesion(usuario) {
 }
 
 // Muestra los elementos marcados con data-requiere-admin (ej: "Administración")
-// solo si el usuario tiene rol "admin" en Firestore
+// solo si el usuario tiene rol "administrador" en Firestore.
+// Para clientes y visitantes el link queda oculto (d-none en el HTML).
 async function actualizarOpcionesAdmin(usuario) {
     let esAdmin = false;
 
-    if (usuario) {
-        try {
-            const datos = await obtenerDatosUsuario(usuario.uid);
-            esAdmin = datos?.rol === "admin";
-        } catch (error) {
-            console.error(error);
-        }
+    try {
+        esAdmin = await esAdministrador(usuario);
+    } catch (error) {
+        console.error(error);
     }
 
     document.querySelectorAll("[data-requiere-admin]").forEach(el =>

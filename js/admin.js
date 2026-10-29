@@ -1,34 +1,27 @@
 // =========================================================
 // ADMINISTRACIÓN (admin.html)
 // ---------------------------------------------------------
-// Página protegida: solo la ven usuarios con rol "admin".
+// Página protegida: solo la ven usuarios con rol "administrador".
+// Un cliente que escriba admin.html en la barra de direcciones es
+// redirigido al inicio con un aviso (ver exigirAdministrador en roles.js).
 // El panel completo (alta, edición y baja de productos, stock
 // y pedidos) se desarrollará en las próximas entregas.
 // =========================================================
 
-import { obtenerUsuarioActual, obtenerDatosUsuario } from "./firebase/auth.js";
-import { guardarMensajePendiente } from "./mensajes.js";
+import { exigirAdministrador } from "./firebase/roles.js";
+import { escaparHtml } from "./mensajes.js";
 
 const contenedor = document.querySelector("#admin-container");
 
-function mostrarSinPermiso() {
-    contenedor.innerHTML = `
-        <section class="locked-module">
-            <div class="locked-icon">🛡️</div>
-            <h1>Acceso solo para administradores</h1>
-            <p class="lead">Tu cuenta no tiene permisos para ver esta sección.</p>
-            <a href="index.html" class="btn btn-outline-primary mt-3">Volver al inicio</a>
-        </section>
-    `;
-}
+function mostrarPanel(usuario) {
+    const nombre = usuario.displayName?.split(" ")[0] ?? usuario.email;
 
-function mostrarEnDesarrollo() {
     contenedor.innerHTML = `
         <section class="locked-module">
             <div class="locked-icon">🛠️</div>
-            <span class="badge rounded-pill text-bg-warning mb-3">Próximamente</span>
+            <span class="badge rounded-pill text-bg-success mb-2">Rol: administrador</span>
             <h1>Panel administrativo</h1>
-            <p class="lead">Sección en desarrollo para próximas entregas.</p>
+            <p class="lead">Hola, ${escaparHtml(nombre)}. Accediste con permisos de administrador.</p>
 
             <div class="locked-card">
                 <h2 class="h5">Funcionalidades previstas</h2>
@@ -49,21 +42,5 @@ function mostrarEnDesarrollo() {
     `;
 }
 
-const usuario = await obtenerUsuarioActual();
-
-if (!usuario) {
-    guardarMensajePendiente("Iniciá sesión con una cuenta de administrador.");
-    window.location.replace("login.html?redirect=admin.html");
-} else {
-    try {
-        const datos = await obtenerDatosUsuario(usuario.uid);
-        if (datos?.rol === "admin") {
-            mostrarEnDesarrollo();
-        } else {
-            mostrarSinPermiso();
-        }
-    } catch (error) {
-        console.error(error);
-        mostrarSinPermiso();
-    }
-}
+const usuario = await exigirAdministrador("admin.html");
+if (usuario) mostrarPanel(usuario);

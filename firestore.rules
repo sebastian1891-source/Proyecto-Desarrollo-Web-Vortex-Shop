@@ -9,10 +9,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // true si el usuario logueado tiene rol "admin" en su documento usuarios/{uid}
+    // true si el usuario logueado tiene rol "administrador" en su documento usuarios/{uid}
     function esAdmin() {
       return estaLogueado()
-        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == "admin";
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == "administrador";
     }
 
     // ---------- USUARIOS ----------

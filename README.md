@@ -116,6 +116,7 @@ Todos los archivos que usan Firebase son módulos (`type="module"`), por eso el 
 |---|---|
 | `js/firebase/config.js` | Inicializa Firebase y exporta `auth` y `db` |
 | `js/firebase/auth.js` | Registro, login, logout, observador de sesión y mensajes de error |
+| `js/firebase/roles.js` | Roles `cliente` / `administrador`, consulta del rol y protección de páginas de administración (Sprint 4) |
 | `js/firebase/productos.js` | Consultas a la colección `productos` |
 | `js/firebase/pedidos.js` | Transacción de compra y consulta de pedidos del usuario |
 | `js/firebase/valoraciones.js` | Lectura, validación y guardado de opiniones |
@@ -132,7 +133,7 @@ Todos los archivos que usan Firebase son módulos (`type="module"`), por eso el 
 2. Firebase Authentication crea la cuenta y se guarda en Firestore el documento `usuarios/{uid}` con nombre, apellido, correo, `rol: "cliente"` y fecha de registro.
 3. En `login.html` se inicia sesión con correo y contraseña. Los errores de Firebase se traducen a mensajes claros (credenciales incorrectas, demasiados intentos, sin conexión, etc.).
 4. La sesión se mantiene al recargar (`browserLocalPersistence`) y se cierra desde el navbar.
-5. El rol `admin` solo puede asignarse manualmente desde la consola de Firebase; las reglas impiden que un usuario se lo cambie a sí mismo.
+5. El rol `administrador` solo puede asignarse manualmente desde la consola de Firebase; las reglas impiden que un usuario se lo cambie a sí mismo (ver Sprint 4).
 
 ### Confirmación de una compra y actualización del stock
 1. Si no hay sesión, no se permite comprar y se ofrece iniciar sesión (el carrito se conserva).
@@ -153,8 +154,54 @@ Cuentas creadas exclusivamente para evaluar el proyecto (no son datos personales
 
 El administrador puede acceder además a `carga-inicial.html`.
 
+## Sprint 4 · Roles y acceso administrativo
+
+### Roles
+El sitio trabaja con dos roles, guardados en el campo `rol` del documento de cada usuario en Firestore:
+
+| Rol | Cómo se obtiene | Qué puede hacer |
+|---|---|---|
+| `cliente` | Automáticamente al registrarse | Comprar, ver su perfil y sus pedidos, opinar |
+| `administrador` | Manualmente desde la consola de Firestore | Todo lo anterior, más el panel de administración y la carga inicial |
+
+```
+usuarios/ uid-del-usuario/
+    nombre: "Ana"
+    apellido: "Pérez"
+    email: "ana@email.com"
+    rol: "cliente"
+    fechaRegistro: <fecha>
+```
+
+### Funcionalidades incorporadas
+- **Campo `rol`** en el documento `usuarios/{uid}` de cada usuario.
+- **Registro como cliente**: todo usuario nuevo se guarda con `rol: "cliente"`. El formulario de registro no tiene ningún campo de rol, y las reglas de Firestore rechazan la creación de un usuario con otro rol aunque se intente desde la consola del navegador.
+- **Consulta del rol al iniciar sesión**: después del login se lee el rol en Firestore; el mensaje de bienvenida indica si se ingresó como administrador, y "Mi perfil" muestra el rol de la cuenta.
+- **Link "Administración" solo para administradores**: está oculto por defecto en el menú de todas las páginas y se muestra únicamente si el rol es `administrador`.
+- **`admin.html` protegido**: si un cliente escribe la URL directamente, se lo redirige al inicio con el aviso *"No tenés permisos para acceder al panel de administración"*. Sin sesión, se lo envía al login y, al ingresar, vuelve al panel. Mientras se verifica el permiso solo se ve "Verificando permisos...", nunca el contenido del panel. Lo mismo aplica a `carga-inicial.html`.
+- **Lógica centralizada** en `js/firebase/roles.js`: los nombres de los roles están definidos en un solo lugar (`ROLES`) y todas las páginas usan `obtenerRolUsuario`, `esAdministrador` y `exigirAdministrador`. Si un documento no tiene rol, se lo trata como cliente (nunca se dan permisos de administrador por defecto).
+
+### Asignar el rol administrador a una cuenta de prueba
+1. Crear la cuenta normalmente desde `registro.html` (queda como `cliente`).
+2. En la consola de Firebase: **Firestore Database > usuarios >** documento con el uid de esa cuenta.
+3. Editar el campo `rol` y cambiar su valor de `cliente` a `administrador`.
+4. Cerrar sesión y volver a ingresar con esa cuenta: aparece el link "Administración".
+
+### Seguridad
+Ocultar el link y redirigir desde JavaScript mejora la experiencia, pero lo que protege los datos son las reglas de `firestore.rules`, que verifican el mismo campo `rol == "administrador"`: solo un administrador puede crear o borrar productos, ver todos los pedidos o cambiar su estado, y ningún usuario puede modificar su propio rol.
+
+### Comprobaciones con las cuentas de prueba (resultado esperado)
+| Prueba | Cliente | Administrador |
+|---|---|---|
+| Se registra con rol `cliente` | ✔ | (se cambió a mano) |
+| Ve el link "Administración" en el menú | No | Sí |
+| Entra a `admin.html` escribiendo la URL | Redirigido al inicio con aviso | Ve el panel |
+| Entra a `carga-inicial.html` escribiendo la URL | Redirigido al inicio con aviso | Ve la carga inicial |
+| Mensaje al iniciar sesión | "Iniciaste sesión correctamente" | "Iniciaste sesión como administrador" |
+| Sin sesión, entra a `admin.html` | Enviado al login | Enviado al login |
+
 **Funcionalidades pendientes para el siguiente sprint**
 - Pago real (la compra registra el pedido, pero no procesa pagos).
 - Edición de los datos del perfil.
-- Panel administrativo funcional.
+- Panel administrativo funcional (alta, edición y baja de productos).
 - Gestión del estado de los pedidos por parte del administrador.
