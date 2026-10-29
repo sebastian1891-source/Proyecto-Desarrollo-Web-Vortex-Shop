@@ -1,8 +1,8 @@
 # Vortex Shop
 
-**Sitio publicado:** [https://sebastian1891-source.github.io/Proyecto-Desarrollo-Web---Vortex-Shop/](https://sebastian1891-source.github.io/Proyecto-Desarrollo-Web---Vortex-Shop/)
+**Sitio publicado:** [https://sebastian1891-source.github.io/Proyecto-Desarrollo-Web-Vortex-Shop/](https://sebastian1891-source.github.io/Proyecto-Desarrollo-Web-Vortex-Shop/)
 
-**Repositorio:** [github.com/sebastian1891-source/Proyecto-Desarrollo-Web---Vortex-Shop](https://github.com/sebastian1891-source/Proyecto-Desarrollo-Web---Vortex-Shop)
+**Repositorio:** [github.com/sebastian1891-source/Proyecto-Desarrollo-Web-Vortex-Shop](https://github.com/sebastian1891-source/Proyecto-Desarrollo-Web-Vortex-Shop)
 
 # Identidad del proyecto
 
@@ -257,8 +257,10 @@ El historial de "Mi perfil" consulta los pedidos con `where("uid", "==", uid)`, 
 
 #### Correcciones de esta etapa
 - Se revisaron todos los enlaces, imágenes e imports entre archivos: no quedaron enlaces rotos.
+- En teléfonos, el inicio y la ficha de producto quedaban 12 px más anchos que la pantalla y se podían desplazar hacia los costados (filas de Bootstrap con `g-5`). Se cambió a `g-4 g-lg-5`: espaciado amplio en escritorio y sin desborde en celulares.
 - Se reemplazó en el pie de página el texto de la plantilla ("Versión inicial para estudiantes") por el nombre del autor.
 - Se publicó la versión final con GitHub Pages y se agregó el enlace al comienzo de este README.
+- Se comprobó en el sitio publicado que, sin iniciar sesión, se pueden leer los productos pero no los pedidos ni los usuarios (las reglas reemplazaron al modo de prueba).
 
 #### Limitación conocida
 Como el sitio no tiene servidor propio, el descuento de stock lo hace el navegador del cliente dentro de una transacción. Las reglas impiden subir el stock, dejarlo negativo o tocar otros campos, pero no pueden comprobar que cada descuento corresponda a un pedido. Resolverlo requeriría Cloud Functions, que está fuera del alcance del curso.
