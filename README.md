@@ -32,6 +32,7 @@ Visual Studio Code: entorno de desarrollo.
 Live Server: ejecución local del proyecto durante el desarrollo.
 JavaScript y LocalStorage (Sprint 2): catálogo dinámico y carrito.
 Firebase 10.12.2 (Sprint 3): Authentication (correo y contraseña) y Cloud Firestore (usuarios, productos, pedidos y valoraciones).
+GitHub Pages (Sprint 4): publicación del sitio.
 
 **Estilo de comunicación**: Moderno, directo, tecnológico y accesible
 
@@ -39,7 +40,7 @@ Firebase 10.12.2 (Sprint 3): Authentication (correo y contraseña) y Cloud Fires
 
 **Tipografía**: Inter
 
-**Identidad visual**: Logotipo con el nombre "Vortex Shop" acompañado de un ícono de computadora
+**Identidad visual**: Logotipo con el nombre "Vortex Shop" acompañado de un ícono de vórtice (reemplazó al ícono de computadora del Sprint 1)
 
 **Categorías iniciales**: Celulares, Computación, Gaming, Periféricos y Accesorios.
 
@@ -112,7 +113,7 @@ Diseño responsive: se utilizaron las grillas y componentes de Bootstrap junto c
 - **Compras reales**: el botón "Confirmar compra" registra el pedido en la colección `pedidos` y descuenta el stock.
 - **Valoraciones en Firestore** (colección `valoraciones`), asociadas al usuario autenticado, con puntuación y comentario validados. Una opinión por usuario y producto (si vuelve a opinar, se edita).
 - **Estados en la interfaz**: mensajes de carga, de catálogo vacío, de producto inexistente y de error de conexión (con botón "Reintentar").
-- **Administración** (`admin.html`): protegida por rol; el link del menú solo aparece para administradores. El panel completo es una sección en desarrollo para próximas entregas.
+- **Administración** (`admin.html`): protegida por rol; el link del menú solo aparece para administradores. En el Sprint 3 el panel era una sección en desarrollo; se completó en el Sprint 4 (ver más abajo).
 - **Carga inicial** (`carga-inicial.html`, solo administradores): sube a Firestore los productos del arreglo local que todavía no existen, sin modificar los ya cargados.
 
 ### Organización de los archivos JavaScript
@@ -227,7 +228,7 @@ Ocultar el link y redirigir desde JavaScript mejora la experiencia, pero lo que 
 - **Botón deshabilitado mientras se guarda**: muestra un spinner y "Guardando...", y se bloquean el formulario y los botones "Editar" para evitar envíos dobles.
 - **Reflejo en el catálogo**: después de guardar se vuelve a leer Firestore para mostrar lo realmente guardado. El catálogo, la ficha y el carrito leen la misma colección, así que el producto nuevo o editado aparece al recargarlos.
 
-Las funciones `crearProducto` y `actualizarProducto` están en `js/firebase/productos.js`; la lógica de la página, en `js/admin.js`. Las reglas de Firestore ya permitían crear y editar productos solo a administradores.
+Las funciones `crearProducto` y `actualizarProducto` están en `js/firebase/productos.js`; la lógica de la pestaña, en `js/admin/productos.js` (`js/admin.js` arma el panel y verifica el rol). Las reglas de Firestore ya permitían crear y editar productos solo a administradores.
 
 #### Comprobaciones (resultado esperado)
 1. Ingresar como administrador y abrir "Administración": se ve la lista con los productos de Firestore.
@@ -275,13 +276,16 @@ El historial de "Mi perfil" consulta los pedidos con `where("uid", "==", uid)`, 
 - En teléfonos, el inicio y la ficha de producto quedaban 12 px más anchos que la pantalla y se podían desplazar hacia los costados (filas de Bootstrap con `g-5`). Se cambió a `g-4 g-lg-5`: espaciado amplio en escritorio y sin desborde en celulares.
 - Se reemplazó en el pie de página el texto de la plantilla ("Versión inicial para estudiantes") por el nombre del autor.
 - Se publicó la versión final con GitHub Pages y se agregó el enlace al comienzo de este README.
+- Los textos que vienen de Firestore (nombres de productos, comentarios, datos de usuarios) se escapan también dentro de atributos HTML, para que un nombre con comillas (ej. `Monitor 27"`) no rompa la página.
+- En el pie de página del inicio, el enlace "Mi perfil" se muestra solo con la sesión iniciada, igual que en el menú.
 - Se comprobó en el sitio publicado que, sin iniciar sesión, se pueden leer los productos pero no los pedidos ni los usuarios (las reglas reemplazaron al modo de prueba).
 
 #### Limitación conocida
 Como el sitio no tiene servidor propio, el descuento de stock lo hace el navegador del cliente dentro de una transacción. Las reglas impiden subir el stock, dejarlo negativo o tocar otros campos, pero no pueden comprobar que cada descuento corresponda a un pedido. Resolverlo requeriría Cloud Functions, que está fuera del alcance del curso.
 
-**Funcionalidades pendientes para el siguiente sprint**
+## Posibles mejoras futuras
+El Sprint 4 cierra el proyecto. Quedan fuera del alcance del curso:
 - Pago real (la compra registra el pedido, pero no procesa pagos).
-- Edición de los datos del perfil.
-- Baja (eliminación) de productos desde el panel.
-- Gestión del estado de los pedidos por parte del administrador.
+- Edición de los datos del perfil por parte del usuario.
+- Asignación de roles desde el panel (hoy se hace desde la consola de Firestore).
+- Descuento de stock validado en un servidor (Cloud Functions), ver "Limitación conocida".

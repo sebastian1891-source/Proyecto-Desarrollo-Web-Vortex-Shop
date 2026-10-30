@@ -29,9 +29,14 @@ export function mostrarMensajePendiente() {
     mostrarAviso(mensaje);
 }
 
-// Escapa texto ingresado por usuarios antes de insertarlo con innerHTML
+// Escapa texto ingresado por usuarios antes de insertarlo con innerHTML.
+// También escapa las comillas, porque el resultado se usa dentro de
+// atributos (alt, src, title, data-id). Ej: un nombre como Monitor 27" ya no rompe el HTML.
 export function escaparHtml(texto) {
-    const div = document.createElement("div");
-    div.textContent = texto ?? "";
-    return div.innerHTML;
+    return String(texto ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
