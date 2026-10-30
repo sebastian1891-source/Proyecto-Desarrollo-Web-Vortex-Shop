@@ -1,6 +1,6 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css"><link rel="icon" href="img/favicon.svg" type="image/svg+xml"><title>Vortex Shop | Catálogo</title></head><body class="d-flex flex-column min-vh-100" data-page="catalogo"><nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm"><div class="container">
+<link rel="stylesheet" href="css/styles.css"><link rel="icon" href="img/favicon.svg" type="image/svg+xml"><title>Vortex Shop | Catálogo</title><script>try{if(localStorage.getItem("vortexTema")==="oscuro")document.documentElement.setAttribute("data-bs-theme","dark")}catch(e){}</script></head><body class="d-flex flex-column min-vh-100" data-page="catalogo"><nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm"><div class="container">
 <a class="navbar-brand fw-bold" href="index.html"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 5h16M6 9h12M8.5 13h7M10.5 17h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span> Vortex Shop</a>
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"><span class="navbar-toggler-icon"></span></button>
 <div class="collapse navbar-collapse" id="mainNav"><ul class="navbar-nav me-auto">
@@ -17,16 +17,16 @@
 </div>
 </div>
 <div class="row g-2 align-items-center mt-3 mb-2">
-<div class="col-12 col-md-5">
-<input type="text" class="form-control" id="buscador" placeholder="Buscar producto por nombre...">
+<div class="col-12 col-lg-5">
+<input type="search" class="form-control" id="buscador" placeholder="Buscar producto por nombre..." aria-label="Buscar producto por nombre">
 </div>
-<div class="col-6 col-md-3">
-<select class="form-select" id="filtroCategoria">
+<div class="col-6 col-lg-3">
+<select class="form-select" id="filtroCategoria" aria-label="Filtrar por categoría">
 <option value="">Todas las categorías</option>
 </select>
 </div>
-<div class="col-6 col-md-2">
-<select class="form-select" id="ordenarPor">
+<div class="col-6 col-lg-4">
+<select class="form-select" id="ordenarPor" aria-label="Ordenar productos">
 <option value="">Ordenar por</option>
 <option value="nombre-asc">Nombre (A-Z)</option>
 <option value="nombre-desc">Nombre (Z-A)</option>
@@ -34,12 +34,30 @@
 <option value="precio-desc">Precio (mayor a menor)</option>
 </select>
 </div>
-<div class="col-12 col-md-2">
-<button type="button" class="btn btn-outline-secondary w-100" id="btnLimpiarFiltros">Limpiar</button>
+<div class="col-6 col-lg-3">
+<div class="input-group">
+<span class="input-group-text">Desde $</span>
+<input type="number" class="form-control" id="precioMinimo" min="0" step="1" inputmode="numeric" placeholder="Mín." aria-label="Precio mínimo">
 </div>
 </div>
-<p class="text-secondary small mb-3" id="resultado-contador"></p>
+<div class="col-6 col-lg-3">
+<div class="input-group">
+<span class="input-group-text">Hasta $</span>
+<input type="number" class="form-control" id="precioMaximo" min="0" step="1" inputmode="numeric" placeholder="Máx." aria-label="Precio máximo">
+</div>
+</div>
+<div class="col-12 col-lg-2 ms-lg-auto">
+<button type="button" class="btn btn-outline-secondary w-100" id="btnLimpiarFiltros">Limpiar filtros</button>
+</div>
+<div class="col-12">
+<div class="invalid-feedback d-block d-none" id="errorPrecio">El precio mínimo no puede ser mayor que el máximo.</div>
+</div>
+</div>
+<p class="text-secondary small mb-3" id="resultado-contador" aria-live="polite"></p>
 <div class="row g-4 mt-1" id="catalogo-container"></div>
+<div class="text-center mt-4 d-none" id="paginacion">
+<button type="button" class="btn btn-outline-primary btn-cargar-mas" id="btnCargarMas">Cargar más productos</button>
+</div>
 </div></main><footer class="footer py-4 mt-auto"><div class="container d-flex justify-content-between flex-wrap gap-2">
 <span>© 2026 Vortex Shop · Proyecto integrador</span><span>Desarrollado por Sebastián Camacho</span></div></footer>
 <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="appToast" class="toast"><div class="toast-header"><strong class="me-auto">Vortex Shop</strong><button class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div></div>

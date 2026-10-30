@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="css/styles.css">
 
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml"><title>Vortex Shop | Inicio</title>
-</head>
+<script>try{if(localStorage.getItem("vortexTema")==="oscuro")document.documentElement.setAttribute("data-bs-theme","dark")}catch(e){}</script></head>
 
 <body class="d-flex flex-column min-vh-100" data-page="inicio">
 
@@ -93,30 +93,38 @@
         <!-- HERO -->
         <section class="hero">
 
-            <div class="container py-5">
+            <!-- Fondo animado: anillos que giran como un vórtice (decorativo) -->
+            <div class="hero-vortex" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="container py-5 position-relative">
 
                 <div class="row align-items-center g-4 g-lg-5">
 
                     <div class="col-lg-6">
 
-                        <span class="badge rounded-pill mb-3 badge-hero">
+                        <span class="badge rounded-pill mb-3 badge-hero hero-anim">
                             Tecnología y electrónica
                         </span>
 
-                        <h1 class="display-4 fw-bold">
-                            Tecnología que impulsa tus ideas.
+                        <h1 class="display-4 fw-bold hero-anim" style="--d: 0.1s;">
+                            Tecnología que <span class="texto-degradado">impulsa</span> tus ideas.
                         </h1>
 
-                        <p class="lead">
+                        <p class="lead hero-anim" style="--d: 0.2s;">
                             Descubrí celulares, computadoras, periféricos,
                             componentes y accesorios tecnológicos para llevar
                             tu experiencia al siguiente nivel.
                         </p>
 
-                        <div class="d-flex gap-2 flex-wrap">
+                        <div class="d-flex gap-2 flex-wrap hero-anim" style="--d: 0.3s;">
 
-                            <a class="btn btn-primary btn-lg" href="catalogo.html">
-                                Explorar productos
+                            <a class="btn btn-primary btn-lg btn-hero" href="catalogo.html">
+                                Explorar productos <span class="flecha" aria-hidden="true">→</span>
                             </a>
 
                             <button class="btn btn-outline-dark btn-lg" id="btnProjectInfo">
@@ -126,7 +134,7 @@
                         </div>
 
                         <!-- MÉTRICAS -->
-                        <div class="row g-3 mt-4">
+                        <div class="row g-3 mt-4 hero-anim" style="--d: 0.4s;">
 
                             <div class="col-4">
 
@@ -163,7 +171,7 @@
                     <!-- IMAGEN PRINCIPAL -->
                     <div class="col-lg-6">
 
-                        <div class="hero-card">
+                        <div class="hero-card hero-anim" style="--d: 0.25s;">
 
                             <div class="hero-card-header">
 

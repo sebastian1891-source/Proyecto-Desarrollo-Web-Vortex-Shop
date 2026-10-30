@@ -10,7 +10,10 @@
 import { obtenerUsuarioActual, obtenerDatosUsuario } from "./firebase/auth.js";
 import { obtenerPedidosDelUsuario, numeroPedido, datosEstado } from "./firebase/pedidos.js";
 import { guardarMensajePendiente, escaparHtml } from "./mensajes.js";
-import { formatearPrecio } from "./productosUI.js";
+import { formatearPrecio, crearTarjetaProducto, conBotonOcupado } from "./productosUI.js";
+import { agregarYNotificar } from "./carrito.js";
+import { obtenerProductos } from "./firebase/productos.js";
+import "./favoritos.js"; // hace funcionar los corazones de la sección "Mis favoritos"
 
 const contenedor = document.querySelector("#perfil-container");
 
@@ -69,6 +72,21 @@ function renderizarPerfil(usuario, datos) {
                 </div>
             </div>
 
+            <div class="col-12" id="favoritos">
+                <div class="auth-card">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <h2 class="h5 fw-bold mb-0">Mis favoritos <span class="text-secondary fw-normal" id="contadorFavoritos"></span></h2>
+                        <a href="catalogo.html" class="btn btn-outline-primary btn-sm">Explorar el catálogo</a>
+                    </div>
+                    <div id="favoritos-container">
+                        <div class="text-center py-3 text-secondary">
+                            <div class="spinner-border spinner-border-sm me-2" aria-hidden="true"></div>
+                            Cargando tus favoritos...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="col-12" id="pedidos">
                 <div class="auth-card">
                     <h2 class="h5 fw-bold mb-3">Mis pedidos</h2>
@@ -119,10 +137,61 @@ function crearTarjetaPedido(pedido) {
             </div>
 
             <div class="text-end small text-secondary">Envío: ${pedido.envio === 0 ? "Gratis" : formatearPrecio(pedido.envio ?? 0)}</div>
-            <div class="text-end fw-bold" style="color: var(--primary);">Total: ${formatearPrecio(pedido.total ?? 0)}</div>
+            <div class="text-end fw-bold texto-titulo">Total: ${formatearPrecio(pedido.total ?? 0)}</div>
         </article>
     `;
 }
+
+// ---------- Mis favoritos ----------
+// Los ids están en usuarios/{uid}.favoritos; los datos de cada producto
+// se leen de la colección "productos" (así se ven precio y stock actuales).
+let productosCatalogo = null;
+
+function dibujarFavoritos(ids) {
+    const contenedorFavoritos = document.querySelector("#favoritos-container");
+    if (!contenedorFavoritos || !productosCatalogo) return;
+
+    // Los productos eliminados del catálogo no se muestran
+    const lista = productosCatalogo.filter(p => ids.includes(p.id));
+    document.querySelector("#contadorFavoritos").textContent = lista.length ? `(${lista.length})` : "";
+
+    if (lista.length === 0) {
+        contenedorFavoritos.innerHTML = `
+            <p class="text-secondary mb-0">Todavía no guardaste favoritos. Tocá el corazón de un producto para guardarlo acá.</p>
+        `;
+        return;
+    }
+
+    contenedorFavoritos.innerHTML = `<div class="row g-4"></div>`;
+    const fila = contenedorFavoritos.firstElementChild;
+    lista.forEach(producto => fila.appendChild(crearTarjetaProducto(producto)));
+}
+
+async function cargarFavoritos(idsIniciales) {
+    const contenedorFavoritos = document.querySelector("#favoritos-container");
+
+    try {
+        productosCatalogo = await obtenerProductos();
+        dibujarFavoritos(idsIniciales);
+    } catch (error) {
+        console.error(error);
+        contenedorFavoritos.innerHTML = `
+            <p class="text-danger mb-2">No se pudieron cargar tus favoritos. Revisá tu conexión e intentá de nuevo.</p>
+            <button class="btn btn-outline-primary btn-sm" id="btnReintentarFavoritos">Reintentar</button>
+        `;
+        contenedorFavoritos.querySelector("#btnReintentarFavoritos").addEventListener("click", () => cargarFavoritos(idsIniciales));
+    }
+}
+
+// Si se quita un corazón desde esta página, la tarjeta desaparece de la lista
+window.addEventListener("vortex:favoritos", evento => dibujarFavoritos(evento.detail.ids));
+
+// En la tarjeta del favorito, "Agregar" suma al carrito como en el catálogo
+document.addEventListener("click", evento => {
+    const boton = evento.target.closest("#favoritos-container .btn-agregar-carrito");
+    if (!boton) return;
+    conBotonOcupado(boton, () => agregarYNotificar(boton.dataset.id, 1));
+});
 
 // Solo se consultan los pedidos cuyo uid es el del usuario autenticado
 async function cargarPedidos(uid) {
@@ -176,12 +245,14 @@ if (!usuario) {
     try {
         const datos = await obtenerDatosUsuario(usuario.uid);
         renderizarPerfil(usuario, datos);
+        cargarFavoritos(Array.isArray(datos?.favoritos) ? datos.favoritos : []);
         cargarPedidos(usuario.uid);
     } catch (error) {
         console.error(error);
         // Si Firestore falla (reglas o conexión) igual se muestran los datos de Authentication
         if (error.code === "permission-denied") {
             renderizarPerfil(usuario, null);
+            cargarFavoritos([]);
             cargarPedidos(usuario.uid);
         } else {
             renderizarError();

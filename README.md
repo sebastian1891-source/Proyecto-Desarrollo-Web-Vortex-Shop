@@ -135,7 +135,8 @@ Todos los archivos que usan Firebase son módulos (`type="module"`), por eso el 
 | `js/sesion.js` | Actualiza el navbar en todas las páginas |
 | `js/valoraciones.js` | Bloque de opiniones de la ficha |
 | `js/productosUI.js` · `js/validaciones.js` · `js/mensajes.js` | Piezas de interfaz, validaciones y avisos compartidos |
-| `js/base.js` | Página activa del menú y modal del inicio |
+| `js/base.js` | Página activa del menú, modal del inicio, modo oscuro, contador del carrito y animaciones |
+| `js/favoritos.js` · `js/firebase/favoritos.js` | Corazones de favoritos y su guardado en Firestore |
 
 ### Registro y autenticación de usuarios
 1. En `registro.html` se piden nombre, apellido, correo, contraseña y su confirmación. Antes de enviar se valida que no haya campos vacíos, el formato del correo, que la contraseña tenga al menos 6 caracteres con letras y números, y que ambas coincidan.
@@ -282,6 +283,22 @@ El historial de "Mi perfil" consulta los pedidos con `where("uid", "==", uid)`, 
 
 #### Limitación conocida
 Como el sitio no tiene servidor propio, el descuento de stock lo hace el navegador del cliente dentro de una transacción. Las reglas impiden subir el stock, dejarlo negativo o tocar otros campos, pero no pueden comprobar que cada descuento corresponda a un pedido. Resolverlo requeriría Cloud Functions, que está fuera del alcance del curso.
+
+### Mejoras finales de diseño y experiencia
+Después de cerrar lo pedido en el Sprint 4 se sumaron estas mejoras, sin cambiar las funciones existentes:
+
+| Mejora | Dónde | Qué hace |
+|---|---|---|
+| Modo oscuro | Todas las páginas | Botón de luna/sol en el navbar. Usa `data-bs-theme="dark"` de Bootstrap 5.3 y redefine las variables de color propias (`--surface`, `--card`, `--titulo`...). La elección se guarda en LocalStorage (`vortexTema`) y se aplica desde el `<head>`, así la página no parpadea en claro al cargar. |
+| Animaciones suaves | Todas las páginas | Las tarjetas aparecen con un fundido escalonado cuando entran en pantalla (`IntersectionObserver`), también las que se crean con JavaScript. Se desactivan si el sistema pide reducir el movimiento. |
+| Portada renovada | `index.html` | Fondo con anillos que giran como un vórtice (solo CSS), palabra destacada con degradado animado, entrada escalonada de los textos y tarjeta flotante. |
+| Contador del carrito | Navbar | Muestra la cantidad de unidades del carrito en el link "Carrito" (y sobre el botón del menú en celulares). Se actualiza al agregar, quitar o comprar, y entre pestañas. |
+| Filtro por precio | `catalogo.html` | Campos "Desde $" y "Hasta $", combinables con la búsqueda, la categoría y el orden. Si el mínimo supera al máximo se avisa y no se filtra por precio. |
+| Paginación | `catalogo.html` | Se muestran 8 productos y el botón "Cargar más" agrega los siguientes sin redibujar los anteriores. El contador indica "Mostrando X de Y". |
+| Favoritos | Catálogo, ficha y "Mi perfil" | Corazón en cada producto. Se guardan en el campo `favoritos` del documento `usuarios/{uid}` (con `arrayUnion` / `arrayRemove`), así se conservan en cualquier dispositivo. Sin sesión se pide iniciarla. "Mi perfil" tiene la sección "Mis favoritos" con precio y stock actuales. No hizo falta cambiar las reglas: cada usuario ya podía editar su documento sin tocar el rol. |
+| Página 404 | `404.html` | GitHub Pages la muestra ante cualquier dirección inexistente del sitio, con la identidad de Vortex Shop y enlaces al inicio y al catálogo. |
+
+Archivos nuevos: `js/favoritos.js`, `js/firebase/favoritos.js` y `404.html`.
 
 ## Posibles mejoras futuras
 El Sprint 4 cierra el proyecto. Quedan fuera del alcance del curso:

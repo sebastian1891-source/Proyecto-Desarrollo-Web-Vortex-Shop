@@ -1060,3 +1060,486 @@ body {
 .selector-estado {
     max-width: 180px;
 }
+
+
+/* =========================================================
+   MEJORAS DE DISEÑO (versión final)
+   - Modo oscuro · animaciones · portada · contador del carrito
+   - Favoritos · filtro por precio y paginación · página 404
+   ========================================================= */
+
+:root {
+    --titulo: var(--primary);      /* color de títulos y precios */
+    --enlace: #0284c7;
+    --imagen-fondo: #eaf7fd;
+}
+
+/* Clase para textos que antes usaban style="color: var(--primary)" */
+.texto-titulo {
+    color: var(--titulo);
+}
+
+/* ---------- Botón de modo oscuro (navbar) ---------- */
+.btn-tema {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    margin-left: auto;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.3s ease;
+}
+
+.btn-tema:hover {
+    background: rgba(56, 189, 248, 0.18);
+    color: var(--secondary);
+    transform: rotate(20deg);
+}
+
+.btn-tema:focus-visible {
+    outline: 2px solid var(--secondary);
+    outline-offset: 2px;
+}
+
+@media (min-width: 992px) {
+    .navbar > .container .navbar-collapse { order: 2; }
+    .btn-tema { order: 3; margin-left: 0.75rem; margin-right: 0; }
+}
+
+/* ---------- Contador del carrito ---------- */
+.badge-carrito {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin-left: 6px;
+    border-radius: 999px;
+    background: var(--secondary);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    vertical-align: 1px;
+}
+
+/* Copia del contador sobre el botón del menú en celulares */
+.badge-toggler {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    margin: 0;
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+@media (min-width: 992px) {
+    .badge-toggler { display: none !important; }
+}
+
+.badge-carrito.rebote {
+    animation: rebote 0.45s ease;
+}
+
+@keyframes rebote {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+/* ---------- Animaciones al aparecer ---------- */
+/* La clase "revelar" la pone js/base.js: sin JavaScript todo se ve normal */
+.revelar:not(.visible) {
+    opacity: 0;
+}
+
+.revelar.visible {
+    animation: aparecer 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes aparecer {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.product-card:hover {
+    border-color: rgba(56, 189, 248, 0.6);
+}
+
+.product-card .btn-primary,
+.product-card .btn-outline-primary {
+    white-space: nowrap;
+}
+
+/* ---------- Portada (hero) renovada ---------- */
+.hero {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.hero-vortex {
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    right: -220px;
+    width: 860px;
+    height: 860px;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.hero-vortex::before {
+    /* brillo celeste detrás de los anillos */
+    content: "";
+    position: absolute;
+    inset: 30%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.28), transparent 70%);
+    filter: blur(10px);
+}
+
+.hero-vortex span {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0 55%, rgba(56, 189, 248, 0.05) 70%, rgba(56, 189, 248, 0.55) 100%);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+    animation: girar 22s linear infinite;
+}
+
+.hero-vortex span:nth-child(2) { inset: 90px;  animation-duration: 16s; animation-direction: reverse; }
+.hero-vortex span:nth-child(3) { inset: 180px; animation-duration: 11s; }
+.hero-vortex span:nth-child(4) { inset: 270px; animation-duration: 7s;  animation-direction: reverse; }
+
+@keyframes girar {
+    to { transform: rotate(360deg); }
+}
+
+.hero-anim {
+    animation: subir 0.75s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: var(--d, 0s);
+}
+
+@keyframes subir {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.texto-degradado {
+    background: linear-gradient(90deg, #0284c7, var(--secondary), #0284c7);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+    animation: brillo 5s ease-in-out infinite alternate;
+}
+
+@keyframes brillo {
+    to { background-position: 200% center; }
+}
+
+.btn-hero {
+    box-shadow: 0 10px 25px rgba(56, 189, 248, 0.35);
+}
+
+.btn-hero .flecha {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.btn-hero:hover .flecha {
+    transform: translateX(4px);
+}
+
+.floating-card {
+    animation: flotar 5s ease-in-out infinite;
+}
+
+@keyframes flotar {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+}
+
+.metric {
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.metric:hover {
+    transform: translateY(-3px);
+    border-color: var(--secondary);
+}
+
+@media (max-width: 991px) {
+    .hero-vortex {
+        right: 50%;
+        width: 640px;
+        height: 640px;
+        transform: translate(50%, -50%);
+        opacity: 0.7;
+    }
+    .hero-vortex span:nth-child(2) { inset: 70px; }
+    .hero-vortex span:nth-child(3) { inset: 140px; }
+    .hero-vortex span:nth-child(4) { inset: 210px; }
+    .floating-card { animation: none; }
+}
+
+/* ---------- Favoritos ---------- */
+.product-image {
+    position: relative;
+}
+
+.btn-favorito {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.product-image .btn-favorito {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+}
+
+.btn-favorito:hover {
+    color: #e11d48;
+    transform: scale(1.08);
+}
+
+.btn-favorito svg {
+    width: 18px;
+    height: 18px;
+}
+
+.btn-favorito.activo {
+    color: #e11d48;
+}
+
+.btn-favorito.activo svg path {
+    fill: currentColor;
+}
+
+.btn-favorito.latido {
+    animation: rebote 0.4s ease;
+}
+
+.btn-favorito-grande {
+    width: 48px;
+    height: 48px;
+}
+
+/* ---------- Catálogo: precio y paginación ---------- */
+.input-group-text {
+    color: var(--text-secondary);
+}
+
+.btn-cargar-mas {
+    min-width: 220px;
+}
+
+/* ---------- Página 404 ---------- */
+.pagina-404 {
+    max-width: 620px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.numero-404 {
+    font-size: clamp(5rem, 18vw, 9rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.pagina-404 h1 {
+    color: var(--titulo);
+}
+
+.vortex-404 {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1.5rem;
+}
+
+.vortex-404 span {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--secondary);
+    border-right-color: rgba(56, 189, 248, 0.4);
+    animation: girar 2.4s linear infinite;
+}
+
+.vortex-404 span:nth-child(2) { inset: 18px; animation-duration: 1.8s; animation-direction: reverse; }
+.vortex-404 span:nth-child(3) { inset: 36px; animation-duration: 1.2s; }
+
+/* ---------- Movimiento reducido ---------- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* =========================================================
+   MODO OSCURO
+   Bootstrap 5.3 adapta sus componentes con data-bs-theme="dark";
+   acá se adaptan los colores propios del sitio.
+   ========================================================= */
+[data-bs-theme="dark"] {
+    color-scheme: dark;
+
+    --ink: #e2e8f0;
+    --surface: #0a1322;
+    --card: #111d30;
+    --border: #23344d;
+    --text-secondary: #94a3b8;
+    --titulo: #e6f1fb;
+    --enlace: #7dd3fc;
+    --imagen-fondo: #16253b;
+    --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 14px 34px rgba(0, 0, 0, 0.5);
+
+    --bs-body-bg: var(--surface);
+    --bs-body-color: var(--ink);
+    --bs-border-color: var(--border);
+    --bs-secondary-color: #94a3b8;
+    --bs-tertiary-bg: #13213a;
+}
+
+[data-bs-theme="dark"] body {
+    background: var(--surface);
+}
+
+/* Títulos, precios y textos que en modo claro usan el azul oscuro */
+[data-bs-theme="dark"] :is(
+    .hero h1, .section-heading h2, .section-heading h1, .product-card h3, .product-card strong,
+    .modal-title, .sprint-summary strong, .toast-header strong, .locked-module h1,
+    .locked-module h2, .locked-card h2, .link-carrito, .auth-card h1, .auth-card h2,
+    .perfil-dato strong, .pedido-numero, .valoracion-autor, .metric strong,
+    .floating-card strong, .stat-valor, main h1, main h2, main h3
+) {
+    color: var(--titulo);
+}
+
+[data-bs-theme="dark"] :is(.eyebrow, .floating-card span, .auth-card a, .link-carrito:hover) {
+    color: var(--enlace);
+}
+
+[data-bs-theme="dark"] .text-secondary {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .hero {
+    background: radial-gradient(circle at 15% 20%, #10304d 0, #0b1628 45%, #0a1322 100%);
+}
+
+[data-bs-theme="dark"] .hero .lead {
+    color: #a9b8cc !important;
+}
+
+[data-bs-theme="dark"] .product-image {
+    background: var(--imagen-fondo);
+}
+
+[data-bs-theme="dark"] .floating-card {
+    background: rgba(17, 29, 48, 0.96);
+}
+
+[data-bs-theme="dark"] :is(.hero .btn-outline-dark, .btn-outline-dark) {
+    border-color: #cbd5e1;
+    color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] :is(.hero .btn-outline-dark, .btn-outline-dark):hover {
+    background: #e2e8f0;
+    border-color: #e2e8f0;
+    color: var(--primary);
+}
+
+[data-bs-theme="dark"] .btn-outline-primary {
+    --bs-btn-color: #7dd3fc;
+    --bs-btn-border-color: #38bdf8;
+    --bs-btn-hover-bg: #38bdf8;
+    --bs-btn-hover-border-color: #38bdf8;
+    --bs-btn-hover-color: var(--primary);
+    --bs-btn-active-bg: #0ea5e9;
+    --bs-btn-active-color: var(--primary);
+}
+
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: transparent;
+}
+
+[data-bs-theme="dark"] .text-bg-light {
+    background-color: #1b2a42 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-bs-theme="dark"] .texto-degradado {
+    background-image: linear-gradient(90deg, #38bdf8, #a5e9ff, #38bdf8);
+}
+
+[data-bs-theme="dark"] .hero-vortex span {
+    background: conic-gradient(from 0deg, transparent 0 55%, rgba(56, 189, 248, 0.08) 70%, rgba(125, 211, 252, 0.75) 100%);
+}
+
+/* Panel administrativo */
+[data-bs-theme="dark"] .admin-tabs .nav-link {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--ink);
+}
+
+[data-bs-theme="dark"] .admin-tabs .nav-link.active {
+    background: var(--secondary);
+    border-color: var(--secondary);
+    color: var(--primary);
+}
+
+[data-bs-theme="dark"] .stat-card {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+[data-bs-theme="dark"] :is(.stat-titulo, .stat-detalle, .tabla-admin th) {
+    color: #94a3b8;
+}
+
+[data-bs-theme="dark"] .comentario-admin {
+    border-bottom-color: var(--border);
+}
+
+[data-bs-theme="dark"] .tabla-admin .fila-editando > td {
+    background-color: #12324d;
+}
+
+[data-bs-theme="dark"] .estrellas-vacias,
+[data-bs-theme="dark"] .estrella-seleccionable:not(.activa) {
+    color: #3b4b63;
+}
+
+/* Transición suave al cambiar de tema */
+body,
+.product-card,
+.auth-card,
+.locked-card,
+.stat-card {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}

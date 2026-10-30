@@ -22,6 +22,8 @@ export function obtenerCarrito() {
 
 function guardarCarrito(carrito) {
     localStorage.setItem(CLAVE_CARRITO, JSON.stringify(carrito));
+    // Avisa al contador del navbar (js/base.js) que el carrito cambió
+    window.dispatchEvent(new CustomEvent("vortex:carrito"));
 }
 
 function quitarDelCarrito(idProducto) {
@@ -227,7 +229,7 @@ function dibujarCarrito(avisos = []) {
                 Envío: ${envio === 0 ? "Gratis" : formatearPrecio(envio)}
             </p>
             <div class="d-flex align-items-center gap-3">
-                <h2 class="fw-bold mb-0" style="color: var(--primary);">Total: ${formatearPrecio(total)}</h2>
+                <h2 class="fw-bold mb-0 texto-titulo">Total: ${formatearPrecio(total)}</h2>
                 <button class="btn btn-primary" id="btnConfirmarCompra">Confirmar compra</button>
             </div>
         </div>
@@ -264,7 +266,7 @@ function dibujarCompraExitosa(pedido) {
                     `).join("")}
                 </ul>
                 <p class="mb-1 mt-3">Envío: ${pedido.envio === 0 ? "Gratis" : formatearPrecio(pedido.envio)}</p>
-                <p class="mb-0 fw-bold" style="color: var(--primary);">Total: ${formatearPrecio(pedido.total)}</p>
+                <p class="mb-0 fw-bold texto-titulo">Total: ${formatearPrecio(pedido.total)}</p>
             </div>
 
             <div class="d-flex gap-2 justify-content-center flex-wrap mt-4">

@@ -17,6 +17,17 @@ export function obtenerEstadoStock(producto) {
     return { texto: `${producto.stock} unidades disponibles`, clase: "text-secondary" };
 }
 
+// Corazón de favoritos. Lo hace funcionar js/favoritos.js (se importa en
+// las páginas que muestran productos); acá solo se arma el HTML.
+const ICONO_CORAZON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>`;
+
+export function crearBotonFavorito(producto, { grande = false } = {}) {
+    return `<button type="button" class="btn-favorito${grande ? " btn-favorito-grande" : ""}"
+        data-id="${escaparHtml(producto.id)}" data-nombre="${escaparHtml(producto.nombre)}"
+        aria-pressed="false" aria-label="Agregar a favoritos: ${escaparHtml(producto.nombre)}"
+        title="Agregar a favoritos">${ICONO_CORAZON}</button>`;
+}
+
 // Crea el elemento HTML (columna + tarjeta) para un producto
 export function crearTarjetaProducto(producto) {
     const columna = document.createElement("div");
@@ -28,6 +39,7 @@ export function crearTarjetaProducto(producto) {
     columna.innerHTML = `
         <article class="product-card h-100">
             <div class="product-image">
+                ${crearBotonFavorito(producto)}
                 <img onerror="this.onerror=null;this.src='img/sin-imagen.svg'" src="${escaparHtml(producto.imagen)}" alt="${escaparHtml(producto.nombre)}">
             </div>
             <div class="p-3">

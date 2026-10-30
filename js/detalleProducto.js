@@ -7,8 +7,9 @@
 // =========================================================
 
 import { obtenerProductoPorId, obtenerProductosPorCategoria, sePuedeComprar, mensajeErrorProductos } from "./firebase/productos.js";
-import { formatearPrecio, obtenerEstadoStock, crearTarjetaProducto, crearHtmlCargando, crearHtmlEstado, conBotonOcupado } from "./productosUI.js";
+import { formatearPrecio, obtenerEstadoStock, crearTarjetaProducto, crearBotonFavorito, crearHtmlCargando, crearHtmlEstado, conBotonOcupado } from "./productosUI.js";
 import { agregarYNotificar } from "./carrito.js";
+import "./favoritos.js"; // corazones de favoritos
 import { renderizarValoraciones } from "./valoraciones.js";
 import { escaparHtml } from "./mensajes.js";
 
@@ -90,11 +91,14 @@ function crearFichaProducto(producto) {
                 <h1 class="fw-bold mt-2">${escaparHtml(producto.nombre)}</h1>
                 <p class="lead">${escaparHtml(producto.descripcion)}</p>
                 <p class="${estado.clase} mb-3">${estado.texto}</p>
-                <h2 class="fw-bold mb-3" style="color: var(--primary);">${formatearPrecio(producto.precio)}</h2>
+                <h2 class="fw-bold mb-3 texto-titulo">${formatearPrecio(producto.precio)}</h2>
 
-                <button class="btn btn-primary btn-lg" id="btnAgregarCarrito" ${comprable ? "" : "disabled"}>
-                    ${comprable ? "Agregar al carrito" : estado.texto}
-                </button>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button class="btn btn-primary btn-lg" id="btnAgregarCarrito" ${comprable ? "" : "disabled"}>
+                        ${comprable ? "Agregar al carrito" : estado.texto}
+                    </button>
+                    ${crearBotonFavorito(producto, { grande: true })}
+                </div>
 
                 <div class="mt-3">
                     <a href="catalogo.html" class="btn btn-outline-dark btn-sm">Volver al catálogo</a>
